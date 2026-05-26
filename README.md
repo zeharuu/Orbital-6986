@@ -99,4 +99,4 @@ NutriNUS is structured around three layers:
 ### Links to Poster and Video 
 [Poster](https://canva.link/jfhimry49n45xsj)
 
-[Demo Video](https://youtu.be/ZmHYcffViCs)
+[Video](https://youtu.be/ZmHYcffViCs)
