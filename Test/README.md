@@ -89,11 +89,11 @@ NutriNUS is structured around three layers:
 
 ### Product Flow (Activity Diagram) 
 
-![User Flow](assets6986/Userflow.png) 
+![User Flow](assets/Userflow.png) 
 
 ### ERM Diagram  
 
-![ERM Diagram](assets6986/Orbitalflow.png)
+![ERM Diagram](assets/Orbitalflow.png)
 
 
 ### Links to Poster and Video 
