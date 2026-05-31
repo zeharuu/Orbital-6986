@@ -1,8 +1,10 @@
-![NutriNUS Logo](src/assets/vite.svg)
 
-# NutriNUS - 6986 
+<img src="src/assets/vite.svg" width="60" height="60" align = left /> 
+
+# **NutriNUS - 6986**
+
 Your NUS food companion for healthier choices!
-
+---
 ## **TEAM** 
 
 **Team Name:** NutriNUS 
