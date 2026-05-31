@@ -87,18 +87,47 @@ NutriNUS is structured around three layers:
 - **Backend Logic** — business logic such as BMI calculation, recommendation filtering, and gamification rules
 - **Database (Firebase)** — stores user profiles, food items extracted from NUS PDFs, meal logs, and challenge data
 
+## Technical Proof of Concept
 
-### **Development Plan** 
+The current NutriNUS prototype is built using React, TypeScript and Vite. It includes a welcome page, profile creation page, and a hardcoded food database that will subsequently be expanded into a dynamic system. This system will then allow food vendors to update menu availability and nutritional information in real time.
+
+### How to Test the Prototype
+
+1. Clone the repository:
+
+git clone https://github.com/zeharuu/Orbital-6986.git
+
+2. Navigate into the project folder
+
+3. Install the required dependencies:
+
+npm install
+
+4. Start the development server:
+
+npm run dev
+
+5. Open the localhost link shown in the terminal, usually:
+   http://localhost:5173/
+
+### Current Features Available for Testing (for Milestone 1)
+
+* Navigate between the Home, Create Profile, and Food Database pages
+* Create a basic user profile by entering name, gender, height, weight, and fitness goal
+* View calculated BMI and daily calorie target
+* Browse a hardcoded food database with calories and macronutrient information 
+
+### **Development Plan and Timeline** 
 
 3rd week of May: Finalised pitch for Orbital Lift-Off, created project poster and video
 4th week of May: Created mockups and wireframes for user flow
-1st week of June (Milestone 1 — 1 June): Finalised README, set up project structure, basic food database populated from NUS PDFs, user profiling input, frontend-backend integration, update video and poster
-2nd week of June: Build centralised food and nutrition database, implement search functionality
+1st week of June (**Milestone 1 — 1 June**): Finalised README, set up project structure, basic sample food database , user profiling input, updated video and poster
+2nd week of June: Build centralised food and nutrition database from NUS pdfs, implement search functionality
 3rd week of June: Build meal logging dashboard and intake tracking
-4th week of June (Milestone 2 — 29 June): Complete food recommendation system, testing and debugging, update project poster and video
+4th week of June (**Milestone 2 — 29 June**): Complete food recommendation system, testing and debugging, update project poster and video
 1st week of July: Implement peer teams' suggestions and feedback
 2nd week of July: Build gamification and health challenges extension
-3rd week of July (Milestone 3 — 27 July): Testing, debugging, UI/UX polish, full data expansion and refinement, update project poster and video
+3rd week of July (**Milestone 3 — 27 July**): Testing, debugging, UI/UX polish, full data expansion and refinement, update project poster and video
 August : Final refinement and submission
 
 ### Product Flow (Activity Diagram) 

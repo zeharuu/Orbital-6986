@@ -25,17 +25,56 @@ export default function App() {
 
   const [name, setName] = useState("");
   const [gender, setGender] = useState("Female");
+  const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("Maintain weight");
   const [profileCreated, setProfileCreated] = useState(false);
 
+  const [addedFoodIds, setAddedFoodIds] = useState<number[]>([]);
+
   const heightInM = Number(height) / 100;
   const bmi =
-    height && weight ? (Number(weight) / (heightInM * heightInM)).toFixed(1) : "-";
+    height && weight
+      ? (Number(weight) / (heightInM * heightInM)).toFixed(1)
+      : "-";
+
+  const calculateBMR = () => {
+    const weightNum = Number(weight);
+    const heightNum = Number(height);
+    const ageNum = Number(age);
+
+    if (!weightNum || !heightNum || !ageNum) {
+      return 0;
+    }
+
+    if (gender === "Male") {
+      return 10 * weightNum + 6.25 * heightNum - 5 * ageNum + 5;
+    } else {
+      return 10 * weightNum + 6.25 * heightNum - 5 * ageNum - 161;
+    }
+  };
+
+  const bmr = calculateBMR();
+
+  const maintenanceCalories = bmr * 1.4;
 
   const calorieTarget =
-    goal === "Lose weight" ? 1600 : goal === "Gain muscle" ? 2300 : 2000;
+    bmr === 0
+      ? "-"
+      : goal === "Lose weight"
+      ? Math.round(maintenanceCalories - 300)
+      : goal === "Gain muscle"
+      ? Math.round(maintenanceCalories + 300)
+      : Math.round(maintenanceCalories);
+
+  const addToLog = (foodId: number) => {
+    if (addedFoodIds.includes(foodId)) {
+      setAddedFoodIds(addedFoodIds.filter((id) => id !== foodId));
+    } else {
+      setAddedFoodIds([...addedFoodIds, foodId]);
+    }
+  };
 
   return (
     <div className="app">
@@ -45,7 +84,7 @@ export default function App() {
       <div className="nav">
         <button onClick={() => setPage("home")}>Home</button>
         <button onClick={() => setPage("profile")}>Create Profile</button>
-        <button onClick={() => setPage("food")}>Food Database</button>
+        <button onClick={() => setPage("food")}>Food Options</button>
       </div>
 
       {page === "home" && (
@@ -87,23 +126,28 @@ export default function App() {
             onChange={(e) => setName(e.target.value)}
           />
 
-          <select value={gender} onChange={(e) => setGender(e.target.value)}>
-            <option>Female</option>
-            <option>Male</option>
-            <option>Prefer not to say</option>
-          </select>
+          <input
+            placeholder="Age"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
+          />
 
           <input
             placeholder="Height (cm)"
             value={height}
             onChange={(e) => setHeight(e.target.value)}
           />
-
-          <input
+       <input
             placeholder="Weight (kg)"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
           />
+
+          <select value={gender} onChange={(e) => setGender(e.target.value)}>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Prefer not to say</option>
+          </select>
 
           <select value={goal} onChange={(e) => setGoal(e.target.value)}>
             <option>Lose weight</option>
@@ -118,7 +162,9 @@ export default function App() {
               <h3>Your Profile Summary</h3>
               <p><strong>Name:</strong> {name || "-"}</p>
               <p><strong>Gender:</strong> {gender}</p>
+              <p><strong>Age:</strong> {age || "-"}</p>
               <p><strong>BMI:</strong> {bmi}</p>
+              <p><strong>BMR:</strong> {bmr ? Math.round(bmr) : "-"} kcal</p>
               <p><strong>Goal:</strong> {goal}</p>
               <p><strong>Daily Calorie Target:</strong> {calorieTarget} kcal</p>
             </div>
@@ -128,7 +174,7 @@ export default function App() {
 
       {page === "food" && (
         <section className="card">
-          <h2>Food Database</h2>
+          <h2>Food Options</h2>
 
           <div className="food-grid">
             {foodItems.map((food) => (
@@ -137,6 +183,13 @@ export default function App() {
                 <p>{food.canteen}</p>
                 <p>{food.calories} kcal</p>
                 <p>P: {food.protein}g | C: {food.carbs}g | F: {food.fats}g</p>
+
+                <button
+                  className={addedFoodIds.includes(food.id) ? "added-button" : ""}
+                  onClick={() => addToLog(food.id)}
+                >
+                  {addedFoodIds.includes(food.id) ? "Added to Log" : "Add to Log"}
+                </button>
               </div>
             ))}
           </div>
@@ -144,4 +197,4 @@ export default function App() {
       )}
     </div>
   );
-}
+} 
