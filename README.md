@@ -34,7 +34,7 @@ As students who are highly conscious of our food intakes and want to eat healthi
 ### 1. Centralised Food & Nutrition Database
 Aggregates standardised nutritional information (calories, protein, carbs, fats) from NUS canteens into one searchable platform. Users can browse dishes by stall or canteen using an integrated search bar.
 
-**Implementation:** Nutritional data is manually extracted from publicly available NUS canteen PDF documents and stored in Firebase. The React Native frontend retrieves and displays this data, allowing users to browse and search by canteen or dish.
+**Implementation:** Nutritional data is manually extracted from publicly available NUS canteen PDF documents and stored in Firebase. The React frontend retrieves and displays this data, allowing users to browse and search by canteen or dish.
 
 ### 2. User Profiling & Personalised Targets
 Users input personal details such as weight, height, activity level, and fitness goals. BMI and other calculations are used to compute personalised daily caloric and macronutrient targets to guide dietary decisions.
@@ -72,7 +72,7 @@ NutriNUS follows the principle of **Separation of Concerns (SoC)** — each part
 
 | Tool | Purpose |
 |---|---|
-| React Native | Frontend, app development |
+| React | Frontend, app development |
 | Firebase | Stores food database, user profiles, meal logs, and challenge progress |
 | NUS Nutritional PDFs | Source of canteen food and nutritional data  |
 | Figma | UI/UX design |
@@ -83,7 +83,7 @@ NutriNUS follows the principle of **Separation of Concerns (SoC)** — each part
 
 NutriNUS is structured around three layers:
 
-- **Frontend (React Native)** — all UI screens and user interactions
+- **Frontend (React)** — all UI screens and user interactions
 - **Backend Logic** — business logic such as BMI calculation, recommendation filtering, and gamification rules
 - **Database (Firebase)** — stores user profiles, food items extracted from NUS PDFs, meal logs, and challenge data
 
