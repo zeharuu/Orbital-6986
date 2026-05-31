@@ -64,20 +64,14 @@ NutriNUS follows the principle of **Separation of Concerns (SoC)** — each part
 
 ### Tech Stack
 
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40" height="40"/>
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" width="40" height="40"/>
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" width="40" height="40"/>
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40" height="40"/>
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg" width="40" height="40"/>
-
 | Tool | Purpose |
 |---|---|
-| React | Frontend, app development |
-| Firebase | Stores food database, user profiles, meal logs, and challenge progress |
+| React <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40" height="20"/>| Frontend, app development |
+| Firebase <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" width="40" height="20"/>| Stores food database, user profiles, meal logs, and challenge progress |
 | NUS Nutritional PDFs | Source of canteen food and nutritional data  |
-| Figma | UI/UX design |
-| GitHub | Version control |
-| Postman | API testing |
+| Figma <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" width="40" height="20"/>| UI/UX design |
+| GitHub <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40" height="20"/>| Version control |
+| Postman <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg" width="40" height="20"/>| API testing |
 
 ### Software Architecture
 
