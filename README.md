@@ -87,14 +87,27 @@ NutriNUS is structured around three layers:
 - **Backend Logic** — business logic such as BMI calculation, recommendation filtering, and gamification rules
 - **Database (Firebase)** — stores user profiles, food items extracted from NUS PDFs, meal logs, and challenge data
 
+
+### **Development Plan** 
+
+3rd week of May: Finalised pitch for Orbital Lift-Off, created project poster and video
+4th week of May: Created mockups and wireframes for user flow
+1st week of June (Milestone 1 — 1 June): Finalised README, set up project structure, basic food database populated from NUS PDFs, user profiling input, frontend-backend integration, update video and poster
+2nd week of June: Build centralised food and nutrition database, implement search functionality
+3rd week of June: Build meal logging dashboard and intake tracking
+4th week of June (Milestone 2 — 29 June): Complete food recommendation system, testing and debugging, update project poster and video
+1st week of July: Implement peer teams' suggestions and feedback
+2nd week of July: Build gamification and health challenges extension
+3rd week of July (Milestone 3 — 27 July): Testing, debugging, UI/UX polish, full data expansion and refinement, update project poster and video
+August : Final refinement and submission
+
 ### Product Flow (Activity Diagram) 
 
-![User Flow](assets/Userflow.png) 
+![User Flow](/src/assets/Userflow.png) 
 
 ### ERM Diagram  
 
-![ERM Diagram](assets/OrbitalFlow.png)
-
+![ERM Diagram](/src/assets/OrbitalFlow.png) 
 
 ### Links to Poster and Video 
 [Poster](https://canva.link/jfhimry49n45xsj)
