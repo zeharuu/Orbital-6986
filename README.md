@@ -1,4 +1,6 @@
-# **NutriNUS - 6986** 
+![NutriNUS Logo](src/assets/vite.svg)
+
+# NutriNUS - 6986 
 Your NUS food companion for healthier choices!
 
 ## **TEAM** 
