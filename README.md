@@ -78,7 +78,6 @@ NutriNUS follows the principle of **Separation of Concerns (SoC)** — each part
 NutriNUS is structured around three layers:
 
 - **Frontend (React)** — all UI screens and user interactions
-- **Backend Logic** — business logic such as BMI calculation, recommendation filtering, and gamification rules
 - **Database (Firebase)** — stores user profiles, food items extracted from NUS PDFs, meal logs, and challenge data
 
 ## Technical Proof of Concept
