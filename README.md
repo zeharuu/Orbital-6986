@@ -138,4 +138,4 @@ npm run dev
 ### Links to Poster and Video 
 [Poster](https://canva.link/jfhimry49n45xsj)
 
-[Video](https://youtu.be/ZmHYcffViCs)
+[Short Demo Video](https://drive.google.com/file/d/16x5WU4F8mRSiSc8ylFpkJll0U8ckVTCk/view?usp=drivesdk)
