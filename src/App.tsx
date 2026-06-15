@@ -10,9 +10,9 @@ import Profile from "./routes/Profile";
 import "./App.css";
 
 function Shell() {
-  const { emailConfirmed } = useApp();
+  const { emailConfirmed, browsingAsGuest } = useApp();
 
-  if (!emailConfirmed) {
+  if (!emailConfirmed && !browsingAsGuest) {
     return <EmailGate />;
   }
 
@@ -20,7 +20,7 @@ function Shell() {
     <>
       <div className="screen">
         <Routes>
-          <Route path="/"        element={<Navigate to="/home" replace />} />
+          <Route path="/"        element={<Navigate to={browsingAsGuest ? "/search" : "/home"} replace />} />
           <Route path="/home"    element={<Home />} />
           <Route path="/search"  element={<Search />} />
           <Route path="/log"     element={<Log />} />

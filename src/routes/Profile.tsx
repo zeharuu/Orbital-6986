@@ -2,7 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
 export default function Profile() {
-  const { profileCreated } = useApp();
+  const { emailConfirmed, profileCreated, stopGuestBrowsing } = useApp();
+  if (!emailConfirmed) {
+    return (
+      <div className="page profile-page">
+        <h2 className="page-title">Sign in required</h2>
+        <div className="empty-card">
+          <p>Sign in or create an account to set up your profile and log meals.</p>
+          <button className="orange-btn" onClick={stopGuestBrowsing}>Sign in</button>
+        </div>
+      </div>
+    );
+  }
   return profileCreated ? <ProfileView /> : <ProfileForm />;
 }
 

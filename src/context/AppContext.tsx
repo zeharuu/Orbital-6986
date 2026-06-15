@@ -1,14 +1,16 @@
 import { createContext, useContext, useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { isValidEmail } from "../data";
+import { foodItems as fallbackFoodItems, isValidEmail } from "../data";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User,
 } from "firebase/auth";
+import type { User } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
 
 type FoodItem = {
@@ -31,7 +33,12 @@ type AppContextType = {
   setEmailInput: (v: string) => void;
   emailError: string;
   emailConfirmed: boolean;
-  confirmEmail: () => Promise<void>;
+  browsingAsGuest: boolean;
+  startGuestBrowsing: () => void;
+  stopGuestBrowsing: () => void;
+  signInWithPassword: (password: string) => Promise<void>;
+  createAccountWithPassword: (password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   authLoading: boolean;
 
@@ -77,6 +84,11 @@ type AppContextType = {
 };
 
 const AppContext = createContext<AppContextType | null>(null);
+const googleProvider = new GoogleAuthProvider();
+const bundledFoodItems: FoodItem[] = fallbackFoodItems.map((item) => ({
+  ...item,
+  id: String(item.id),
+}));
 
 export function useApp() {
   const ctx = useContext(AppContext);
@@ -92,6 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [emailError, setEmailError] = useState("");
   const [email, setEmail] = useState("");
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [browsingAsGuest, setBrowsingAsGuest] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -113,8 +126,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const hasLoggedThisSession = useRef(false);
 
   // Food items from Firestore
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [foodLoading, setFoodLoading] = useState(true);
+  const [foodItems, setFoodItems] = useState<FoodItem[]>(bundledFoodItems);
+  const [foodLoading, setFoodLoading] = useState(false);
 
   // Listen for auth state changes
   useEffect(() => {
@@ -124,6 +137,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setCurrentUser(user);
           setEmail(user.email || "");
           setEmailConfirmed(true);
+          setBrowsingAsGuest(false);
           hasLoggedThisSession.current = false;
 
           // Load user profile from Firestore
@@ -186,16 +200,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadFoodItems = async () => {
       try {
-        setFoodLoading(true);
         const foodRef = collection(db, "foodItems");
         const snapshot = await getDocs(foodRef);
         const items = snapshot.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
         } as FoodItem));
-        setFoodItems(items.sort((a, b) => a.name.localeCompare(b.name)));
+        const nextItems = items.length > 0 ? items : bundledFoodItems;
+        setFoodItems(nextItems.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error("Failed to load food items:", error);
+        setFoodItems(bundledFoodItems.sort((a, b) => a.name.localeCompare(b.name)));
+      } finally {
         setFoodLoading(false);
       }
     };
@@ -307,29 +323,88 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     : email ? email.slice(0, 2).toUpperCase() : "?";
 
   // Actions
-  const confirmEmail = async () => {
+  const getAuthErrorMessage = (error: unknown) => {
+    const code = typeof error === "object" && error && "code" in error
+      ? String((error as { code?: string }).code)
+      : "";
+
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "An account already exists for this email. Try signing in instead.";
+      case "auth/invalid-credential":
+      case "auth/wrong-password":
+      case "auth/user-not-found":
+        return "Email or password is incorrect.";
+      case "auth/weak-password":
+        return "Password should be at least 6 characters.";
+      case "auth/popup-closed-by-user":
+        return "Google sign-in was closed before it finished.";
+      case "auth/account-exists-with-different-credential":
+        return "This email is already linked to another sign-in method.";
+      default:
+        return error instanceof Error ? error.message : "Authentication failed. Try again.";
+    }
+  };
+
+  const getTrimmedEmail = () => {
     const trimmed = emailInput.trim().toLowerCase();
     if (!isValidEmail(trimmed)) {
       setEmailError("Please enter a valid email address.");
+      return null;
+    }
+    return trimmed;
+  };
+
+  const signInWithPassword = async (password: string) => {
+    const trimmed = getTrimmedEmail();
+    if (!trimmed) return;
+    if (!password) {
+      setEmailError("Please enter your password.");
       return;
     }
 
     try {
       setEmailError("");
-      // Try sign up first
-      try {
-        await createUserWithEmailAndPassword(auth, trimmed, "firebase-auto-generated");
-      } catch (error: any) {
-        // If account exists, try signing in
-        if (error.code === "auth/email-already-in-use") {
-          await signInWithEmailAndPassword(auth, trimmed, "firebase-auto-generated");
-        } else {
-          throw error;
-        }
-      }
-    } catch (error: any) {
-      setEmailError(error.message || "Authentication failed");
+      await signInWithEmailAndPassword(auth, trimmed, password);
+    } catch (error) {
+      setEmailError(getAuthErrorMessage(error));
     }
+  };
+
+  const createAccountWithPassword = async (password: string) => {
+    const trimmed = getTrimmedEmail();
+    if (!trimmed) return;
+    if (password.length < 6) {
+      setEmailError("Password should be at least 6 characters.");
+      return;
+    }
+
+    try {
+      setEmailError("");
+      await createUserWithEmailAndPassword(auth, trimmed, password);
+    } catch (error) {
+      setEmailError(getAuthErrorMessage(error));
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      setEmailError("");
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      setEmailError(getAuthErrorMessage(error));
+    }
+  };
+
+  const startGuestBrowsing = () => {
+    setEmailError("");
+    setBrowsingAsGuest(true);
+    navigate("/search");
+  };
+
+  const stopGuestBrowsing = () => {
+    setBrowsingAsGuest(false);
+    navigate("/");
   };
 
   const saveProfile = async () => {
@@ -380,6 +455,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      setBrowsingAsGuest(false);
       navigate("/home");
     } catch (error) {
       console.error("Sign out failed:", error);
@@ -388,7 +464,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      email, emailInput, setEmailInput, emailError, emailConfirmed, confirmEmail, signOut, authLoading,
+      email, emailInput, setEmailInput, emailError, emailConfirmed,
+      browsingAsGuest, startGuestBrowsing, stopGuestBrowsing,
+      signInWithPassword, createAccountWithPassword, signInWithGoogle, signOut, authLoading,
       name, setName, gender, setGender, age, setAge,
       height, setHeight, weight, setWeight, goal, setGoal,
       profileCreated, profileComplete, profilePrompt, setProfilePrompt, saveProfile, editProfile,

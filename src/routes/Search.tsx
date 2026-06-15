@@ -7,8 +7,9 @@ const filters  = ["All", "High Protein", "Low Cal", "Vegetarian"];
 export default function Search() {
   const navigate = useNavigate();
   const {
+    emailConfirmed,
     profileComplete, profileCreated, loggedCounts, addFood, removeFood,
-    isOverLimit, remaining, setProfilePrompt, foodItems, foodLoading,
+    isOverLimit, remaining, setProfilePrompt, foodItems, foodLoading, stopGuestBrowsing,
   } = useApp();
 
   const canteens = useMemo(() => ["All", ...Array.from(new Set(foodItems.map(f => f.canteen)))], [foodItems]);
@@ -70,11 +71,20 @@ export default function Search() {
         <div className="search-no-profile-notice">
           <span>📋 </span>
           <span>
-            <strong>Browse only mode</strong> —{" "}
-            <button className="inline-link" onClick={() => navigate("/profile")}>
-              {!profileCreated ? "set up your profile" : "add height & weight"}
+            <strong>Browsing is open</strong> —{" "}
+            <button
+              className="inline-link"
+              onClick={() => {
+                if (!emailConfirmed) {
+                  stopGuestBrowsing();
+                  return;
+                }
+                navigate("/profile");
+              }}
+            >
+              {!emailConfirmed ? "sign in" : !profileCreated ? "set up your profile" : "add height & weight"}
             </button>{" "}
-            to log food
+            when you want to log food
           </span>
         </div>
       )}
@@ -139,9 +149,16 @@ export default function Search() {
                     {!profileComplete ? (
                       <button
                         className="result-log-btn locked"
-                        onClick={() => { setProfilePrompt(true); navigate("/profile"); }}
+                        onClick={() => {
+                          if (!emailConfirmed) {
+                            stopGuestBrowsing();
+                            return;
+                          }
+                          setProfilePrompt(true);
+                          navigate("/profile");
+                        }}
                       >
-                        🔒 {!profileCreated ? "Set up profile to log" : "Add height & weight to log"}
+                        🔒 {!emailConfirmed ? "Sign in to log" : !profileCreated ? "Set up profile to log" : "Add height & weight to log"}
                       </button>
                     ) : count === 0 ? (
                       <button

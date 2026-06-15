@@ -113,6 +113,114 @@ body {
   font-weight: 600;
 }
 
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: #eef3f8;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #607184;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 8px;
+}
+
+.auth-tab.active {
+  background: #ffffff;
+  color: #003D7C;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+
+.gate-card .form-group label {
+  color: #607184;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #8899aa;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 18px 0;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #e4ebf3;
+}
+
+.google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #ffffff;
+  color: #003D7C;
+  border: 1.5px solid #dbe5ef;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 13px;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.google-btn:hover {
+  background: #f8fbff;
+  border-color: #b8c8d8;
+}
+
+.google-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.google-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #dbe5ef;
+  color: #f47c20;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.guest-browse-btn {
+  width: 100%;
+  background: transparent;
+  color: #003D7C;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 16px;
+  padding: 6px;
+}
+
+.guest-browse-btn:hover {
+  color: #f47c20;
+}
+
 /* ── Profile prompt / email badge ── */
 .profile-prompt-notice {
   background: #fff3cd;
@@ -172,6 +280,13 @@ body {
   line-height: 1.4;
 }
 
+.nudge-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .nudge-btn {
   background: #003D7C;
   color: white;
@@ -184,6 +299,19 @@ body {
   font-family: 'Inter', sans-serif;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.nudge-secondary-btn {
+  background: #eef3f8;
+  color: #003D7C;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
 }
 
 /* ── Browse-only notice in search ── */

@@ -3,20 +3,21 @@ import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoPleaseUpdateWithRealKey",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "nutrinus-demo.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "nutrinus-demo",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "nutrinus-demo.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef123456",
+  apiKey: "AIzaSyBSp7zgjEn6VMaCXlw3QpkSgi94tq51S3E",
+  authDomain: "orbital-6986.firebaseapp.com",
+  projectId: "orbital-6986",
+  storageBucket: "orbital-6986.firebasestorage.app",
+  messagingSenderId: "187634703170",
+  appId: "1:187634703170:web:a66f5833bc5c5153af06db",
+  measurementId: "G-LCS4Q2WFJL"
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Use emulators in development (optional, for local testing)
-if (import.meta.env.DEV && !window.location.hostname.includes("firebase")) {
+// Use emulators only when explicitly enabled for local testing.
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true") {
   try {
     connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
     connectFirestoreEmulator(db, "localhost", 8080);

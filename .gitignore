@@ -5,6 +5,7 @@ dist-ssr
 
 # Firebase
 serviceAccountKey.json
+FIREBASE_*.md
 
 # Editor directories and files
 .vscode/*

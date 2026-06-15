@@ -45,9 +45,12 @@ export default function Home() {
           <span className="nudge-icon">👤</span>
           <div className="nudge-body">
             <div className="nudge-title">Set up your profile</div>
-            <div className="nudge-desc">Complete your profile to start logging calories.</div>
+            <div className="nudge-desc">Browse food anytime. Add a profile when you want to log meals.</div>
           </div>
-          <button className="nudge-btn" onClick={() => navigate("/profile")}>Set Up →</button>
+          <div className="nudge-actions">
+            <button className="nudge-secondary-btn" onClick={() => navigate("/search")}>Browse</button>
+            <button className="nudge-btn" onClick={() => navigate("/profile")}>Set Up</button>
+          </div>
         </div>
       )}
 
@@ -118,8 +121,8 @@ export default function Home() {
 
       {!profileCreated ? (
         <div className="empty-card">
-          <p>Set up your profile to start logging meals.</p>
-          <button className="orange-btn" onClick={() => navigate("/profile")}>Create Profile</button>
+          <p>You can browse meals before setting up your profile.</p>
+          <button className="orange-btn" onClick={() => navigate("/search")}>Browse Food</button>
         </div>
       ) : loggedEntries.length === 0 ? (
         <div className="empty-card">

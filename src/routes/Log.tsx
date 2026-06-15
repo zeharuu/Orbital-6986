@@ -4,6 +4,7 @@ import { useApp } from "../context/AppContext";
 export default function Log() {
   const navigate = useNavigate();
   const {
+    emailConfirmed, stopGuestBrowsing,
     profileCreated,
     loggedEntries, totalCalories, calorieTarget,
     isOverLimit, calorieProgress, remaining,
@@ -16,8 +17,13 @@ export default function Log() {
 
       {!profileCreated ? (
         <div className="empty-card">
-          <p>You need a profile to log your meals.</p>
-          <button className="orange-btn" onClick={() => navigate("/profile")}>Set Up Profile</button>
+          <p>{emailConfirmed ? "You need a profile to log your meals." : "Sign in to create a profile and log meals."}</p>
+          <button
+            className="orange-btn"
+            onClick={() => emailConfirmed ? navigate("/profile") : stopGuestBrowsing()}
+          >
+            {emailConfirmed ? "Set Up Profile" : "Sign in"}
+          </button>
         </div>
       ) : (
         <>
