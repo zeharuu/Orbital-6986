@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
 const filters  = ["All", "High Protein", "Low Cal", "Vegetarian"];
+const sizeOrder = ["Small", "Normal", "Upsize"];
+
+// "Alfredo (Small)" -> { baseName: "Alfredo", size: "Small" }
+// "Chicken Briyani"  -> { baseName: "Chicken Briyani", size: null }
+function parseSizeVariant(name: string) {
+  const match = name.match(/^(.+?)\s*\((Small|Normal|Upsize)\)$/i);
+  if (!match) return { baseName: name, size: null as string | null };
+  return { baseName: match[1], size: match[2] };
+}
 
 export default function Search() {
   const navigate = useNavigate();
@@ -17,11 +26,28 @@ export default function Search() {
   const [searchQuery, setSearchQuery]   = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeCanteen, setActiveCanteen] = useState("All");
+  const [selectedSize, setSelectedSize]   = useState<Record<string, string>>({});
 
-  const filteredFood = foodItems.filter(f => {
-    const matchSearch  = f.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchFilter  = activeFilter === "All" || f.tags.includes(activeFilter);
-    const matchCanteen = activeCanteen === "All" || f.canteen === activeCanteen;
+  // Group same dish across sizes (e.g. Alfredo Small/Normal/Upsize) into one card.
+  const groups = useMemo(() => {
+    const map = new Map<string, { key: string; baseName: string; canteen: string; stall: string; variants: { size: string | null; item: typeof foodItems[number] }[] }>();
+    for (const item of foodItems) {
+      const { baseName, size } = parseSizeVariant(item.name);
+      const key = `${item.canteen}|${item.stall}|${baseName}`;
+      if (!map.has(key)) map.set(key, { key, baseName, canteen: item.canteen, stall: item.stall, variants: [] });
+      map.get(key)!.variants.push({ size, item });
+    }
+    for (const group of map.values()) {
+      group.variants.sort((a, b) => sizeOrder.indexOf(a.size ?? "") - sizeOrder.indexOf(b.size ?? ""));
+    }
+    return Array.from(map.values());
+  }, [foodItems]);
+
+  const filteredGroups = groups.filter(g => {
+    const query = searchQuery.toLowerCase();
+    const matchSearch  = g.baseName.toLowerCase().includes(query) || g.stall.toLowerCase().includes(query);
+    const matchFilter  = activeFilter === "All" || g.variants.some(v => v.item.tags.includes(activeFilter));
+    const matchCanteen = activeCanteen === "All" || g.canteen === activeCanteen;
     return matchSearch && matchFilter && matchCanteen;
   });
 
@@ -102,19 +128,23 @@ export default function Search() {
       ) : (
         <>
           <div className="results-count">
-            {filteredFood.length} results: {activeCanteen === "All" ? "All Canteens" : activeCanteen}
+            {filteredGroups.length} results: {activeCanteen === "All" ? "All Canteens" : activeCanteen}
           </div>
 
           <div className="search-results">
-            {filteredFood.map(food => {
+            {filteredGroups.map(group => {
+              const hasSizes = group.variants.length > 1;
+              const chosenSize = selectedSize[group.key];
+              const activeVariant = group.variants.find(v => v.size === chosenSize) || group.variants[0];
+              const food = activeVariant.item;
               const count = loggedCounts[food.id] || 0;
               return (
-                <div className="result-card" key={food.id}>
+                <div className="result-card" key={group.key}>
                   <div className="result-thumb" />
                   <div className="result-body">
                     <div className="result-top">
                       <div>
-                        <div className="result-name">{food.name}</div>
+                        <div className="result-name">{group.baseName}</div>
                         <div className="result-stall">{food.stall}</div>
                       </div>
                       <div className="result-cal-block">
@@ -123,12 +153,24 @@ export default function Search() {
                       </div>
                     </div>
 
+                    {hasSizes && (
+                      <div className="size-chips">
+                        {group.variants.map(v => (
+                          <button
+                            key={v.size}
+                            className={`size-chip${activeVariant.size === v.size ? " active" : ""}`}
+                            onClick={() => setSelectedSize(prev => ({ ...prev, [group.key]: v.size! }))}
+                          >{v.size}</button>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="result-macros">
                       {[
                         { val: `${food.protein}g`, lbl: "PROTEIN" },
                         { val: `${food.carbs}g`,   lbl: "CARBS" },
                         { val: `${food.fat}g`,     lbl: "FAT" },
-                        { val: `${food.sodium}g`,  lbl: "SODIUM" },
+                        ...(food.sodium !== undefined ? [{ val: `${food.sodium}g`, lbl: "SODIUM" }] : []),
                       ].map(({ val, lbl }) => (
                         <div className="rmacro" key={lbl}>
                           <span className="rmacro-val">{val}</span>

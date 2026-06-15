@@ -7,6 +7,6 @@ export type FoodItem = {
   protein: number;
   carbs: number;
   fat: number;
-  sodium: number;
+  sodium?: number;
   tags: string[];
 };

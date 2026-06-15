@@ -874,6 +874,31 @@ body {
   color: #8899aa;
 }
 
+.size-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.size-chip {
+  background: #f0f4f9;
+  color: #003D7C;
+  border: 2px solid transparent;
+  padding: 5px 14px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+
+.size-chip.active {
+  background: #fff3e9;
+  border-color: #f47c20;
+  color: #f47c20;
+}
+
 .result-macros {
   display: flex;
   gap: 14px;
