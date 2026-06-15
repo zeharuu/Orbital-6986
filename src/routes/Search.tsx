@@ -140,7 +140,6 @@ export default function Search() {
               const count = loggedCounts[food.id] || 0;
               return (
                 <div className="result-card" key={group.key}>
-                  <div className="result-thumb" />
                   <div className="result-body">
                     <div className="result-top">
                       <div>

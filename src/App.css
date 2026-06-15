@@ -830,14 +830,6 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,0.14);
 }
 
-.result-thumb {
-  width: 52px;
-  height: 52px;
-  background: #e8f0fb;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
 .result-body { flex: 1; min-width: 0; }
 
 .result-top {
