@@ -10,7 +10,17 @@ import Profile from "./routes/Profile";
 import "./App.css";
 
 function Shell() {
-  const { emailConfirmed, browsingAsGuest } = useApp();
+  const { emailConfirmed, browsingAsGuest, authLoading } = useApp();
+
+  if (authLoading) {
+    return (
+      <div className="email-gate">
+        <img src="/favicon.svg" alt="NutriNUS" className="gate-logo" />
+        <div className="gate-title">Nutri<span className="brand-nus">NUS</span></div>
+        <div className="gate-sub">Your NUS food companion</div>
+      </div>
+    );
+  }
 
   if (!emailConfirmed && !browsingAsGuest) {
     return <EmailGate />;

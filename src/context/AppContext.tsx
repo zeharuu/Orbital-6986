@@ -11,7 +11,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from "firebase/firestore";
 
 type FoodItem = {
   id: string;
@@ -59,6 +59,7 @@ type AppContextType = {
 
   // Food log
   loggedCounts: Record<string, number>;
+  logHistory: Record<string, Record<string, number>>;
   addFood: (id: string) => void;
   removeFood: (id: string) => void;
 
@@ -121,10 +122,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Food log
   const [loggedCounts, setLoggedCounts] = useState<Record<string, number>>({});
+  const [logHistory, setLogHistory] = useState<Record<string, Record<string, number>>>({});
 
   // Streak
   const [streakDays, setStreakDays] = useState(0);
   const hasLoggedThisSession = useRef(false);
+  // Blocks persistLog from firing before Firestore data has loaded on sign-in
+  const hasRestoredFromFirestore = useRef(false);
 
   // Food items from Firestore
   const [foodItems, setFoodItems] = useState<FoodItem[]>(bundledFoodItems);
@@ -135,6 +139,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
+          hasRestoredFromFirestore.current = false;
           setCurrentUser(user);
           setEmail(user.email || "");
           setEmailConfirmed(true);
@@ -165,19 +170,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               setStreakDays(s.count || 0);
             }
 
-            // Load today's food log
-            const dl = data.dailyLog || {};
-            if (dl.date === today && dl.counts) {
-              setLoggedCounts(dl.counts);
+            // Load full log history and today's counts
+            const logsData: Record<string, Record<string, number>> = data.logs || {};
+            setLogHistory(logsData);
+            if (logsData[today]) {
+              setLoggedCounts(logsData[today]);
+            } else if (data.dailyLog?.date === today && data.dailyLog?.counts) {
+              // Migrate from old dailyLog format
+              setLoggedCounts(data.dailyLog.counts);
             }
+            // Allow persistLog to run only after Firestore data is loaded
+            hasRestoredFromFirestore.current = true;
           }
         } else {
           // User signed out
+          hasRestoredFromFirestore.current = false;
           setCurrentUser(null);
           setEmail("");
           setEmailConfirmed(false);
           setProfileCreated(false);
           setLoggedCounts({});
+          setLogHistory({});
           setStreakDays(0);
           setName("");
           setAge("");
@@ -222,22 +235,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Persist daily food log
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !hasRestoredFromFirestore.current) return;
+
+    const today = new Date().toDateString();
 
     const persistLog = async () => {
+      const userDocRef = doc(db, "users", currentUser.uid);
       try {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        await setDoc(
-          userDocRef,
-          {
-            dailyLog: { date: new Date().toDateString(), counts: loggedCounts },
-            updatedAt: new Date().toISOString(),
-          },
-          { merge: true }
-        );
-      } catch (error) {
-        console.error("Failed to persist food log:", error);
+        await updateDoc(userDocRef, {
+          [`logs.${today}`]: loggedCounts,
+          updatedAt: new Date().toISOString(),
+        });
+      } catch {
+        // Document may not exist yet for brand-new users
+        await setDoc(userDocRef, { logs: { [today]: loggedCounts }, updatedAt: new Date().toISOString() }, { merge: true });
       }
+      setLogHistory(prev => ({ ...prev, [today]: loggedCounts }));
     };
 
     const timer = setTimeout(persistLog, 500);
@@ -471,7 +484,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       name, setName, gender, setGender, age, setAge,
       height, setHeight, weight, setWeight, goal, setGoal,
       profileCreated, profileComplete, profilePrompt, setProfilePrompt, saveProfile, editProfile,
-      loggedCounts, addFood, removeFood,
+      loggedCounts, logHistory, addFood, removeFood,
       streakDays,
       foodItems, foodLoading,
       bmi, bmr, calorieTarget, loggedEntries,

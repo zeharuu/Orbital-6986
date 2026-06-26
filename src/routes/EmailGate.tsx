@@ -10,7 +10,6 @@ export default function EmailGate() {
     createAccountWithPassword,
     signInWithGoogle,
     startGuestBrowsing,
-    authLoading,
   } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -37,19 +36,6 @@ export default function EmailGate() {
       setIsSubmitting(false);
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="email-gate">
-        <img src="/favicon.svg" alt="NutriNUS" className="gate-logo" />
-        <div className="gate-title">Nutri<span className="brand-nus">NUS</span></div>
-        <div className="gate-sub">Your NUS food companion</div>
-        <div className="gate-card">
-          <p style={{ textAlign: "center", color: "#8899aa" }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="email-gate">

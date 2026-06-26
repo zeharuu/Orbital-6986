@@ -1,6 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-SG", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function Log() {
   const navigate = useNavigate();
   const {
@@ -9,7 +14,14 @@ export default function Log() {
     loggedEntries, totalCalories, calorieTarget,
     isOverLimit, calorieProgress, remaining,
     addFood, removeFood,
+    logHistory, foodItems,
   } = useApp();
+
+  const today = new Date().toDateString();
+
+  const pastDays = Object.entries(logHistory)
+    .filter(([date]) => date !== today)
+    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime());
 
   return (
     <div className="page log-page">
@@ -88,6 +100,41 @@ export default function Log() {
                 + Add More
               </button>
             </>
+          )}
+
+          {pastDays.length > 0 && (
+            <div className="history-section">
+              <h3 className="history-title">Past Days</h3>
+              {pastDays.map(([date, counts]) => {
+                const entries = foodItems
+                  .filter(f => (counts[f.id] || 0) > 0)
+                  .map(f => ({ ...f, count: counts[f.id] }));
+                const dayTotal = entries.reduce((s, f) => s + f.calories * f.count, 0);
+
+                return (
+                  <div className="history-card" key={date}>
+                    <div className="history-card-header">
+                      <span className="history-date">{formatDate(date)}</span>
+                      <span className="history-kcal">{dayTotal.toLocaleString()} kcal</span>
+                    </div>
+                    {entries.length === 0 ? (
+                      <p className="history-empty">No items recorded</p>
+                    ) : (
+                      <div className="history-items">
+                        {entries.map(f => (
+                          <div className="history-item" key={f.id}>
+                            <span className="history-item-name">{f.name}</span>
+                            <span className="history-item-right">
+                              x{f.count} · {(f.calories * f.count).toLocaleString()} kcal
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </>
       )}

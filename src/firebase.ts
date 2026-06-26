@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getAuth, connectAuthEmulator, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,6 +15,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+setPersistence(auth, browserLocalPersistence);
 
 // Use emulators only when explicitly enabled for local testing.
 if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true") {

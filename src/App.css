@@ -1303,3 +1303,70 @@ select option { background: #ffffff; color: #003D7C; }
 }
 
 .nav-item.active { color: #f47c20; }
+
+/* Log history */
+.history-section { margin-top: 24px; }
+
+.history-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 10px;
+}
+
+.history-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+}
+
+.history-kcal {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f47c20;
+}
+
+.history-items { display: flex; flex-direction: column; gap: 6px; }
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.history-item-name {
+  color: rgba(255,255,255,0.8);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.history-item-right {
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.history-empty {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+}
