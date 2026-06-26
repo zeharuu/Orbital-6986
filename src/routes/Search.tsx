@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
 const filters  = ["All", "High Protein", "Low Cal", "Vegetarian"];
-const sizeOrder = ["Small", "Normal", "Upsize"];
+const sizeOrder = ["Half", "Small", "Normal", "Medium", "Full", "Large", "Upsize"];
 
 // "Alfredo (Small)" -> { baseName: "Alfredo", size: "Small" }
+// "Sunrise Sandwich (Half)" -> { baseName: "Sunrise Sandwich", size: "Half" }
 // "Chicken Briyani"  -> { baseName: "Chicken Briyani", size: null }
 function parseSizeVariant(name: string) {
-  const match = name.match(/^(.+?)\s*\((Small|Normal|Upsize)\)$/i);
+  const match = name.match(/^(.+?)\s*\((Half|Full|Small|Normal|Medium|Large|Upsize)\)$/i);
   if (!match) return { baseName: name, size: null as string | null };
   return { baseName: match[1], size: match[2] };
 }
