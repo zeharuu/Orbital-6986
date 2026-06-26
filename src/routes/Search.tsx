@@ -54,6 +54,10 @@ export default function Search() {
 
   return (
     <div className="page search-page">
+      <div className="utown-disclaimer">
+        * Calorie counts for UTown items are estimates and may not be accurate
+      </div>
+
       <div className="search-top">
         <div className="search-canteen-label">Canteens</div>
         <div className="search-canteen-name">
@@ -167,11 +171,11 @@ export default function Search() {
 
                     <div className="result-macros">
                       {[
-                        { val: `${food.protein}g`, lbl: "PROTEIN" },
-                        { val: `${food.carbs}g`,   lbl: "CARBS" },
-                        { val: `${food.fat}g`,     lbl: "FAT" },
-                        ...(food.sodium !== undefined ? [{ val: `${food.sodium}g`, lbl: "SODIUM" }] : []),
-                      ].map(({ val, lbl }) => (
+                        { num: food.protein, val: `${food.protein}g`, lbl: "PROTEIN" },
+                        { num: food.carbs,   val: `${food.carbs}g`,   lbl: "CARBS" },
+                        { num: food.fat,     val: `${food.fat}g`,     lbl: "FAT" },
+                        ...(food.sodium !== undefined ? [{ num: food.sodium, val: `${food.sodium}g`, lbl: "SODIUM" }] : []),
+                      ].filter(m => m.num > 0).map(({ val, lbl }) => (
                         <div className="rmacro" key={lbl}>
                           <span className="rmacro-val">{val}</span>
                           <span className="rmacro-lbl">{lbl}</span>
@@ -221,6 +225,7 @@ export default function Search() {
               );
             })}
           </div>
+
         </>
       )}
     </div>

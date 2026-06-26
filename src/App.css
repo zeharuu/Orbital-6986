@@ -462,6 +462,13 @@ body {
 
 .over-limit-banner strong { color: #c05000; }
 
+.utown-disclaimer {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
 /* ── Calories card (white) ── */
 .calories-card {
   background: #ffffff;

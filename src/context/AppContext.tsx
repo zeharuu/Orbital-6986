@@ -24,6 +24,7 @@ type FoodItem = {
   fat: number;
   sodium?: number;
   tags: string[];
+  estimated?: boolean;
 };
 
 type AppContextType = {
