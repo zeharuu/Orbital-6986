@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "./context/AppContext";
 import { useApp } from "./context/AppContext";
+import { MapProvider } from "./context/MapContext";
 import BottomNav from "./components/BottomNav";
 import EmailGate from "./routes/EmailGate";
 import Home from "./routes/Home";
 import Search from "./routes/Search";
 import Log from "./routes/Log";
 import Profile from "./routes/Profile";
+import MapPage from "./routes/Map";
 import "./App.css";
 
 function Shell() {
@@ -35,6 +37,7 @@ function Shell() {
           <Route path="/search"  element={<Search />} />
           <Route path="/log"     element={<Log />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/map"     element={<MapPage />} />
           <Route path="*"        element={<Navigate to="/home" replace />} />
         </Routes>
       </div>
@@ -47,9 +50,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <div className="app">
-          <Shell />
-        </div>
+        <MapProvider>
+          <div className="app">
+            <Shell />
+          </div>
+        </MapProvider>
       </AppProvider>
     </BrowserRouter>
   );
