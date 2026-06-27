@@ -1185,6 +1185,12 @@ const yihWokExpressItems = buildItems('Yusof Ishak House', 'Kiosk 1 - Wok Expres
   ['Set H - Egg Fried Rice (Vegetarian)',                           560, 12, 16, 82],
 ]);
 
+yihWokExpressItems.forEach(item => {
+  if (item.name.includes('Veg') || item.name.includes('Vegetarian')) {
+    item.tags.push('Vegetarian');
+  }
+});
+
 const foodItems = [
   ...westernItems, ...nasiPadangItems, ...vegetarianItems, ...malaItems,
   ...indianItems, ...chineseItems, ...drinksItems, ...fruitsItems,
