@@ -1174,6 +1174,17 @@ const utownRoyalsBistroItems = [
   ], { vegetarian: true }),
 ];
 
+const yihWokExpressItems = buildItems('Yusof Ishak House', 'Kiosk 1 - Wok Express', [
+  ['Set A - Egg Fried Rice, Chicken Thigh, Chinese Sausage, Prawn', 780, 38, 28, 82],
+  ['Set B - Soy Sauce Fried Rice, Chicken Thigh, Chinese Sausage',  720, 34, 24, 80],
+  ['Set C - Egg Fried Rice, Chicken Thigh, Luncheon Meat',          740, 35, 26, 80],
+  ['Set D - XO Fried Rice, Chicken Thigh, Prawn',                   730, 37, 25, 78],
+  ['Set E - Soy Sauce Fried Rice (Veg)',                            590, 14, 18, 84],
+  ['Set F - Egg Fried Rice, Chicken Thigh, Prawn',                  720, 37, 24, 78],
+  ['Set G - XO Fried Rice, Chicken Thigh, Chinese Sausage, Luncheon Meat', 810, 36, 32, 82],
+  ['Set H - Egg Fried Rice (Vegetarian)',                           560, 12, 16, 82],
+]);
+
 const foodItems = [
   ...westernItems, ...nasiPadangItems, ...vegetarianItems, ...malaItems,
   ...indianItems, ...chineseItems, ...drinksItems, ...fruitsItems,
@@ -1186,6 +1197,8 @@ const foodItems = [
   ...utownWesternItems, ...utownIndianItems, ...utownDimsumItems,
   ...utownFruitJuiceItems, ...utownBeveragesItems,
   ...utownSaporeItems, ...utownRoyalsBistroItems,
+  // Yusof Ishak House
+  ...yihWokExpressItems
 ];
 
 async function seedFoodItems() {
