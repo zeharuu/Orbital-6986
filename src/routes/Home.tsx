@@ -20,9 +20,7 @@ export default function Home() {
   const suggestions = useMemo(() => {
     if (!profileCreated || remaining === null || remaining <= 0) return [];
     const eligible = foodItems.filter(f => f.calories <= remaining);
-    const shuffled = [...eligible].sort(() => {
-      return Math.sin(suggestionSeed + eligible.indexOf(eligible[0])) - 0.5;
-    });
+    const shuffled = [...eligible].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 3);
   }, [foodItems, remaining, profileCreated, suggestionSeed]);
   const circumference = 2 * Math.PI * radius;
