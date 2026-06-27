@@ -1370,3 +1370,61 @@ select option { background: #ffffff; color: #003D7C; }
   font-size: 12px;
   color: rgba(255,255,255,0.3);
 }
+
+/* ── Map Page ── */
+.map-page { padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+
+.map-header { }
+.map-title { font-size: 22px; font-weight: 700; color: #fff; }
+.map-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+.locate-btn {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  background: #4ade80; color: #000; border: none; border-radius: 12px;
+  padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.locate-btn.loading { opacity: 0.6; cursor: not-allowed; }
+
+.location-error {
+  font-size: 13px; color: #f87171; background: rgba(248,113,113,0.1);
+  border-radius: 10px; padding: 10px 14px;
+}
+
+.nearest-banner {
+  background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nearest-label { font-size: 11px; color: #4ade80; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.nearest-name { font-size: 20px; font-weight: 700; color: #fff; }
+.nearest-dist { font-size: 13px; color: rgba(255,255,255,0.55); }
+
+.canteen-cards { display: flex; flex-direction: column; gap: 12px; }
+
+.canteen-card {
+  background: rgba(255,255,255,0.06); border-radius: 14px;
+  padding: 16px; border: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.canteen-card.nearest {
+  border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.07);
+}
+
+.canteen-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.canteen-card-name { font-size: 17px; font-weight: 700; color: #fff; }
+.canteen-card-full { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.canteen-card-dist { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+.nearest-chip {
+  background: #4ade80; color: #000; font-size: 11px; font-weight: 700;
+  border-radius: 20px; padding: 3px 10px;
+}
+
+.directions-btn {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8);
+  border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 500;
+  text-decoration: none; transition: background 0.2s;
+}
+.directions-btn:hover { background: rgba(255,255,255,0.14); }
