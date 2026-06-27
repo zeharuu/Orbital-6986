@@ -55,7 +55,7 @@ export default function Search() {
   return (
     <div className="page search-page">
       <div className="utown-disclaimer">
-        * Calorie counts for UTown items are estimates and may not be accurate
+        * Nutritional information is based on estimates and may not be exact.
       </div>
 
       <div className="search-top">
