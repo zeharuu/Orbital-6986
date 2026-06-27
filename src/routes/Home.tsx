@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { getGreeting } from "../data";
@@ -10,10 +11,20 @@ export default function Home() {
     isOverLimit, remaining,
     calorieTarget, totalCalories, calorieProgress,
     totalCarbs, totalProtein, totalFat,
-    loggedEntries, streakDays,
+    loggedEntries, streakDays, foodItems, addFood,
   } = useApp();
 
   const radius = 46;
+  const [suggestionSeed, setSuggestionSeed] = useState(() => Date.now());
+
+  const suggestions = useMemo(() => {
+    if (!profileCreated || remaining === null || remaining <= 0) return [];
+    const eligible = foodItems.filter(f => f.calories <= remaining);
+    const shuffled = [...eligible].sort(() => {
+      return Math.sin(suggestionSeed + eligible.indexOf(eligible[0])) - 0.5;
+    });
+    return shuffled.slice(0, 3);
+  }, [foodItems, remaining, profileCreated, suggestionSeed]);
   const circumference = 2 * Math.PI * radius;
   const strokeDash = (calorieProgress / 100) * circumference;
 
@@ -169,6 +180,43 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Suggested Meals */}
+      {profileCreated && suggestions.length > 0 && (
+        <div className="suggestions-section" style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: "16px", paddingTop:"16px"}}>
+          <div className="section-header">
+            <span className="section-title">Suggested For You</span>
+            <button
+              className="see-all-btn"
+              onClick={() => setSuggestionSeed(Date.now())}
+              style={{ fontSize: "0.75rem", padding: "4px 10px" }}
+            >
+              SHUFFLE 🔀
+            </button>
+          </div>
+          <div className="meals-list">
+            {suggestions.map(food => (
+              <div className="meal-row" key={food.id}>
+                <button
+                  className="orange-btn"
+                  style={{ fontSize: "0.7rem", padding: "4px 8px", minWidth: "fit-content", whiteSpace: "nowrap" }}
+                  onClick={() => addFood(food.id)}
+                >
+                  + Add
+                </button>
+                <div className="meal-info">
+                  <div className="meal-name">{food.name}</div>
+                  <div className="meal-canteen">{food.canteen} — {food.stall.split(" - ")[0]}</div>
+                </div>
+                <div className="meal-cal">
+                  {food.calories.toLocaleString()}
+                  <span className="meal-cal-unit">kcal</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>  
+      )}      
     </div>
   );
 }
