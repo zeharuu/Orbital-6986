@@ -9,6 +9,14 @@ export const foodItems: FoodItem[] = [
   { id: 6, name: "Salmon Soba Bowl", canteen: "The Deck", stall: "Stall 6 - Japanese", calories: 480, protein: 30, carbs: 50, fat: 14, sodium: 1.1, tags: ["High Protein", "Low Cal"] },
   { id: 7, name: "Ban Mian", canteen: "TechnoEdge", stall: "Stall 1 - Noodles", calories: 420, protein: 22, carbs: 55, fat: 12, sodium: 1.8, tags: ["Low Cal"] },
   { id: 8, name: "Veggie Bee Hoon", canteen: "TechnoEdge", stall: "Stall 4 - Mixed Veg", calories: 320, protein: 10, carbs: 58, fat: 6, sodium: 0.9, tags: ["Vegetarian", "Low Cal"] },
+  { id: 9, name: "Set A - Egg Fried Rice, Chicken Thigh, Chinese Sausage, Prawn", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 780, protein: 38, carbs: 82, fat: 28, sodium: 2.6, tags: [] },
+  { id: 10, name: "Set B - Soy Sauce Fried Rice, Chicken Thigh, Chinese Sausage", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 720, protein: 34, carbs: 80, fat: 24, sodium: 2.4, tags: [] },
+  { id: 11, name: "Set C - Egg Fried Rice, Chicken Thigh, Luncheon Meat", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 740, protein: 35, carbs: 80, fat: 26, sodium: 2.5, tags: [] },
+  { id: 12, name: "Set D - XO Fried Rice, Chicken Thigh, Prawn", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 730, protein: 37, carbs: 78, fat: 25, sodium: 2.4, tags: [] },
+  { id: 13, name: "Set E - Soy Sauce Fried Rice (Veg)", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 590, protein: 14, carbs: 84, fat: 18, sodium: 1.8, tags: ["Vegetarian", "Low Cal"] },
+  { id: 14, name: "Set F - Egg Fried Rice, Chicken Thigh, Prawn", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 720, protein: 37, carbs: 78, fat: 24, sodium: 2.3, tags: ["High Protein"] },
+  { id: 15, name: "Set G - XO Fried Rice, Chicken Thigh, Chinese Sausage, Luncheon Meat", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 810, protein: 36, carbs: 82, fat: 32, sodium: 2.8, tags: [] },
+  { id: 16, name: "Set H - Egg Fried Rice (Vegetarian)", canteen: "Yusof Ishak House", stall: "Kiosk 1 - Wok Express", calories: 560, protein: 12, carbs: 82, fat: 16, sodium: 1.6, tags: ["Vegetarian", "Low Cal"] },
 ];
 
 export function getGreeting() {
