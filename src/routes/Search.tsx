@@ -5,6 +5,12 @@ import { useApp } from "../context/AppContext";
 const filters  = ["All", "High Protein", "Low Cal", "Vegetarian"];
 const sizeOrder = ["Half", "Small", "Normal", "Medium", "Full", "Large", "Upsize"];
 
+const canteenAliases: Record<string, string[]> = {
+  "YIH": ["yih", "yusof", "yusof ishak", "yusof ishak house"],
+  "UTown": ["utown", "university town", "u town"],
+  "TechnoEdge": ["technoedge", "techno edge", "techno"],
+};
+
 // "Alfredo (Small)" -> { baseName: "Alfredo", size: "Small" }
 // "Sunrise Sandwich (Half)" -> { baseName: "Sunrise Sandwich", size: "Half" }
 // "Chicken Briyani"  -> { baseName: "Chicken Briyani", size: null }
@@ -46,7 +52,12 @@ export default function Search() {
 
   const filteredGroups = groups.filter(g => {
     const query = searchQuery.toLowerCase();
-    const matchSearch  = g.baseName.toLowerCase().includes(query) || g.stall.toLowerCase().includes(query);
+    const aliases = canteenAliases[g.canteen] || [];
+    const matchSearch =
+      g.baseName.toLowerCase().includes(query) ||
+      g.stall.toLowerCase().includes(query) ||
+      g.canteen.toLowerCase().includes(query) ||
+      aliases.some(alias => alias.includes(query) || query.includes(alias));
     const matchFilter  = activeFilter === "All" || g.variants.some(v => v.item.tags.includes(activeFilter));
     const matchCanteen = activeCanteen === "All" || g.canteen === activeCanteen;
     return matchSearch && matchFilter && matchCanteen;
