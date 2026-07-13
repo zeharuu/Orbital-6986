@@ -1,0 +1,2 @@
+$kind: collection
+description: "API-level integration tests for Nutrinus: Firebase Auth -> Firestore -> Firestore Security Rules. Run against the 'Orbital Local' environment."

@@ -1,0 +1,11 @@
+$kind: http-request
+description: Authenticated, but as a different user. Rules require request.auth.uid == userId, so User B must not be able to read User A's document.
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken2}}
+scripts:
+  - type: afterResponse
+    code: pm.test('Cross-user read is denied (403)', () => pm.response.code === 403);
+    language: text/javascript
+order: 2000

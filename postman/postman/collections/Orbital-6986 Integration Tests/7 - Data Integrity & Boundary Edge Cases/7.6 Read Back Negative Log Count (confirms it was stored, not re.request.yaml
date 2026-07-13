@@ -1,0 +1,14 @@
+$kind: http-request
+name: 7.6 Read Back Negative Log Count (confirms it was stored, not rejected)
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+      var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;
+      pm.test('negative count stored exactly as-is (-5), proving no server-side validation exists', () => count === '-5');
+    language: text/javascript
+order: 6000

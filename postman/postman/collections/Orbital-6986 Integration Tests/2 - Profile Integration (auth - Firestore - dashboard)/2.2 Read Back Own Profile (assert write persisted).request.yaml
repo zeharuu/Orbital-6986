@@ -1,0 +1,14 @@
+$kind: http-request
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Read succeeded (200)', () => pm.response.code === 200);
+      var json = pm.response.json();
+      pm.test('name field matches what was written', () => json.fields.name.stringValue === 'Postman Tester');
+      pm.test('profileCreated is true', () => json.fields.profileCreated.booleanValue === true);
+    language: text/javascript
+order: 2000

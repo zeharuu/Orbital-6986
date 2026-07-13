@@ -1,0 +1,25 @@
+$kind: http-request
+description: Uses Postman's built-in {{$timestamp}} dynamic variable so the email is guaranteed unique on every single run - this account has genuinely never existed before, so it's guaranteed to have no Firestore document yet (saveProfile() has never been called for it).
+url: https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  key: "{{apiKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "email": "postman-ephemeral-{{$timestamp}}@example.com",
+      "password": "TestPass123!",
+      "returnSecureToken": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Ephemeral user created (200)', () => pm.response.code === 200);
+      var json = pm.response.json();
+      pm.environment.set('ephemeralIdToken', json.idToken);
+      pm.environment.set('ephemeralUid', json.localId);
+    language: text/javascript
+order: 7000

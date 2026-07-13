@@ -1,0 +1,27 @@
+$kind: http-request
+name: 7.1 [Fixed] Garbage Profile Data Now Rejected (height=-500, weight=banana)
+description: firestore.rules now runs isValidProfileWrite(), which requires height/weight to be numeric strings within sane bounds (mirrors data.ts's isValidHeight/isValidWeight). This was previously a documented gap (accepted with 200) - now closed at the database layer, independent of the client.
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=height&updateMask.fieldPaths=weight
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  - key: updateMask.fieldPaths
+    value: height
+  - key: updateMask.fieldPaths
+    value: weight
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "height": { "stringValue": "-500" },
+        "weight": { "stringValue": "banana" }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Firestore now rejects garbage profile data (403)', () => pm.response.code === 403);
+    language: text/javascript
+order: 1000

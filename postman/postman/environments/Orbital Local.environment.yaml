@@ -1,0 +1,30 @@
+name: Orbital Local
+values:
+  - key: apiKey
+    value: AIzaSyBSp7zgjEn6VMaCXlw3QpkSgi94tq51S3E
+  - key: projectId
+    value: orbital-6986
+  - key: testEmail
+    value: postman-test-a@example.com
+  - key: testPassword
+    value: TestPass123!
+  - key: testEmail2
+    value: postman-test-b@example.com
+  - key: testPassword2
+    value: TestPass456!
+  - key: idToken
+    value: ''
+  - key: uid
+    value: ''
+  - key: idToken2
+    value: ''
+  - key: uid2
+    value: ''
+  - key: _wrongCasePassword
+    value: ''
+  - key: _mixedCaseEmail
+    value: ''
+  - key: ephemeralIdToken
+    value: ''
+  - key: ephemeralUid
+    value: ''

@@ -1,0 +1,33 @@
+$kind: http-request
+name: "3.7 Remove Last Instance (removeFood: 1 -> deleted)"
+description: "Mirrors removeFood()'s 'if' branch: (next[id] || 0) <= 1 is true since count is 1, so 'delete next[id]' removes the key entirely rather than decrementing to 0. The body sends an empty map for postmanTestDate to represent that deletion."
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  updateMask.fieldPaths: logs.postmanTestDate
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "logs": {
+          "mapValue": {
+            "fields": {
+              "postmanTestDate": {
+                "mapValue": {
+                  "fields": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Remove-last write succeeded (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 7000

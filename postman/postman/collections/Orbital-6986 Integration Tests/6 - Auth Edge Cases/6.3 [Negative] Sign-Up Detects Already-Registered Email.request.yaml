@@ -1,0 +1,28 @@
+$kind: http-request
+description: Identity Platform keys accounts by email regardless of which sign-in method created them (password vs Google), so this proves the same collision detection your app relies on in AppContext.tsx's 'auth/email-already-in-use' / 'auth/account-exists-with-different-credential' handling - a second signUp for an existing email is always rejected with EMAIL_EXISTS, whether the original account was password-based or Google-based.
+url: https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  key: "{{apiKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{testEmail}}",
+      "password": "SomeOtherPass999!",
+      "returnSecureToken": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Duplicate sign-up is rejected (400)', function () {
+        pm.expect(pm.response.code).to.equal(400);
+      });
+      var json = pm.response.json();
+      pm.test('Error is EMAIL_EXISTS', function () {
+        pm.expect(json.error && json.error.message).to.equal('EMAIL_EXISTS');
+      });
+    language: text/javascript
+order: 3000

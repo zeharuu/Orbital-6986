@@ -1,0 +1,15 @@
+# Use this workspace to collaborate
+workspace:
+  id: d8d8b610-5860-4e51-80c8-a18af9477429
+
+localResources:
+  collections:
+    - ../Orbital-6986-Integration.postman_collection.json
+  environments:
+    - ../Orbital-Local.postman_environment.json
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Orbital-6986 Integration Tests: 047b94c8-ab78-4eda-a133-e0381e9b2ce0

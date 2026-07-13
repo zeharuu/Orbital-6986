@@ -1,0 +1,15 @@
+$kind: http-request
+name: 3.8 Read Back After Full Removal (assert key deleted, not just 0)
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+      var dateMap = json.fields.logs && json.fields.logs.mapValue.fields.postmanTestDate;
+      var foodKeys = dateMap ? Object.keys(dateMap.mapValue.fields || {}) : [];
+      pm.test('food id 1 key is fully deleted, not present with value 0', () => !foodKeys.includes('1'));
+    language: text/javascript
+order: 8000

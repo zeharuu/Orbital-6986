@@ -1,0 +1,12 @@
+$kind: http-request
+name: 7.8 [Gap-Check] Read New User's Doc Before Any Profile Save (expect 404)
+description: A user can exist in Firebase Auth without ever having a Firestore document (saveProfile() creates the doc, not sign-up). AppContext.tsx's onAuthStateChanged handler guards this with `if (userDoc.exists())` - this proves that guard is load-bearing, not dead code, by confirming the raw API really does 404 here.
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{ephemeralUid}}
+method: GET
+headers:
+  Authorization: Bearer {{ephemeralIdToken}}
+scripts:
+  - type: afterResponse
+    code: pm.test('Brand-new user doc does not exist yet (404)', () => pm.response.code === 404);
+    language: text/javascript
+order: 8000

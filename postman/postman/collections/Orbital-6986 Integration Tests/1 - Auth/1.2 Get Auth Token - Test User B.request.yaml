@@ -1,0 +1,58 @@
+$kind: http-request
+description: Second identity, used only to prove User A's data is NOT readable/writable by User B. Same self-healing sign-up/sign-in fallback as 1.1.
+url: https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  key: "{{apiKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{testEmail2}}",
+      "password": "{{testPassword2}}",
+      "returnSecureToken": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+
+      function saveToken(t) {
+        pm.environment.set('idToken2', t.idToken);
+        pm.environment.set('uid2', t.localId);
+      }
+
+      if (json.idToken) {
+        saveToken(json);
+        pm.test('Test User B: signed up and token captured', () => true);
+      } else {
+        pm.test('Test User B: signup failed as expected (already exists)', function () {
+          pm.expect(json.error && json.error.message).to.eql('EMAIL_EXISTS');
+        });
+
+        var signInRequest = {
+          url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + pm.environment.get('apiKey'),
+          method: 'POST',
+          header: { 'Content-Type': 'application/json' },
+          body: {
+            mode: 'raw',
+            raw: JSON.stringify({
+              email: pm.environment.get('testEmail2'),
+              password: pm.environment.get('testPassword2'),
+              returnSecureToken: true
+            })
+          }
+        };
+
+        pm.sendRequest(signInRequest, function (err, res) {
+          pm.test('Test User B: fallback sign-in succeeded', function () {
+            pm.expect(err).to.equal(null);
+            pm.expect(res.code).to.equal(200);
+          });
+          if (!err && res.code === 200) saveToken(res.json());
+        });
+      }
+    language: text/javascript
+order: 2000

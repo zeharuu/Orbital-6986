@@ -1,0 +1,31 @@
+$kind: http-request
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=profileCreated&updateMask.fieldPaths=name&updateMask.fieldPaths=height&updateMask.fieldPaths=weight
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  - key: updateMask.fieldPaths
+    value: profileCreated
+  - key: updateMask.fieldPaths
+    value: name
+  - key: updateMask.fieldPaths
+    value: height
+  - key: updateMask.fieldPaths
+    value: weight
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "profileCreated": { "booleanValue": true },
+        "name": { "stringValue": "Postman Tester" },
+        "height": { "stringValue": "170" },
+        "weight": { "stringValue": "60" }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Profile write succeeded (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 1000
