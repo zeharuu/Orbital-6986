@@ -113,7 +113,7 @@ export default function Search() {
         <div className="search-no-profile-notice">
           <span>📋 </span>
           <span>
-            <strong>Browsing is open</strong> —{" "}
+            <strong>Browsing is open</strong>,{" "}
             <button
               className="inline-link"
               onClick={() => {
@@ -154,9 +154,13 @@ export default function Search() {
               const activeVariant = group.variants.find(v => v.size === chosenSize) || group.variants[0];
               const food = activeVariant.item;
               const count = loggedCounts[food.id] || 0;
+              const noNutritionData = food.protein <= 0 && food.carbs <= 0 && food.fat <= 0;
               return (
                 <div className="result-card" key={group.key}>
                   <div className="result-body">
+                    {noNutritionData && (
+                      <div className="estimated-nutrition-notice">Estimated Nutritional Information</div>
+                    )}
                     <div className="result-top">
                       <div>
                         <div className="result-name">{group.baseName}</div>

@@ -1,0 +1,25 @@
+$kind: http-request
+description: "User Story: 'As a returning user, I want my profile and meal logs to be saved so I can continue tracking across sessions.' This gets a genuinely NEW token (simulating closing the app and coming back later), independent of whatever token 1.1/1.2 produced earlier in this run."
+url: https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  key: "{{apiKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{testEmail}}",
+      "password": "{{testPassword}}",
+      "returnSecureToken": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Fresh sign-in succeeded (200)', () => pm.response.code === 200);
+      var json = pm.response.json();
+      pm.environment.set('idToken', json.idToken);
+      pm.environment.set('uid', json.localId);
+    language: text/javascript
+order: 3000

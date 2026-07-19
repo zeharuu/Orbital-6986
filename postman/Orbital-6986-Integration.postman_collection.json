@@ -204,6 +204,65 @@
               ]
             }
           }]
+        },
+        {
+          "name": "2.3 Simulate Returning User (fresh sign-in, new session)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signInWithPassword"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "User Story: 'As a returning user, I want my profile and meal logs to be saved so I can continue tracking across sessions.' This gets a genuinely NEW token (simulating closing the app and coming back later), independent of whatever token 1.1/1.2 produced earlier in this run."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Fresh sign-in succeeded (200)', () => pm.response.code === 200);",
+                "var json = pm.response.json();",
+                "pm.environment.set('idToken', json.idToken);",
+                "pm.environment.set('uid', json.localId);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "2.4 Returning User Still Sees Previously Saved Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            },
+            "description": "Proves persistence across sessions, not just read-after-write in the same run: uses the fresh token from 2.3, not the original token from folder 1, to confirm the profile saved in 2.1 is still there for a genuinely new sign-in."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('name still matches after a fresh sign-in', () => json.fields.name.stringValue === 'Postman Tester');",
+                "pm.test('height still matches after a fresh sign-in', () => json.fields.height.stringValue === '170');",
+                "pm.test('weight still matches after a fresh sign-in', () => json.fields.weight.stringValue === '60');",
+                "pm.test('profileCreated still true after a fresh sign-in', () => json.fields.profileCreated.booleanValue === true);"
+              ]
+            }
+          }]
         }
       ]
     },

@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { getGreeting } from "../data";
+import { useChallenges } from "../context/ChallengesContext";
+import { getGreeting, formatDateSlash } from "../data";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,10 +13,14 @@ export default function Home() {
     calorieTarget, totalCalories, calorieProgress,
     totalCarbs, totalProtein, totalFat,
     loggedEntries, streakDays, foodItems, addFood,
+    useTargetMode, targetBmi, targetDate, weightDiffKg, targetTimelineUnsafe, earliestSafeDate,
+    bmi, bmiCategory, recommendedGoal, goal,
   } = useApp();
+  const { points } = useChallenges();
 
   const radius = 46;
   const [suggestionSeed, setSuggestionSeed] = useState(() => Date.now());
+  const hasEstimatedEntry = loggedEntries.some(f => f.protein <= 0 && f.carbs <= 0 && f.fat <= 0);
 
   const suggestions = useMemo(() => {
     if (!profileCreated || remaining === null || remaining <= 0) return [];
@@ -45,7 +50,10 @@ export default function Home() {
             {name || email.split("@")[0]} <span className="name-accent">• {initials}</span>
           </div>
         </div>
-        <div className="avatar">{initials}</div>
+        <button className="points-badge" onClick={() => navigate("/challenges")} title="View Challenges">
+          <span className="points-badge-icon">🍡</span>
+          <span className="points-badge-value">{points.toLocaleString()}</span>
+        </button>
       </div>
 
       {/* Profile nudge */}
@@ -70,50 +78,83 @@ export default function Home() {
         </div>
       )}
 
-      {/* Calories + ring */}
+      {/* Calories + ring + macros, combined into one panel */}
       {profileCreated && (
         <>
           <div className={`calories-card${isOverLimit ? " over" : ""}`}>
-            <div className="calories-left">
-              <div className="calories-label">TODAY'S CALORIES</div>
-              <div className={`calories-value${isOverLimit ? " over" : ""}`}>
-                {totalCalories.toLocaleString()}
-              </div>
-              {calorieTarget && (
-                <div className="calories-sub">
-                  {isOverLimit
-                    ? `${Math.abs(remaining!)} kcal over target`
-                    : `at ${calorieTarget.toLocaleString()} kcal target`}
+            <div className="calories-card-top">
+              <div className="calories-left">
+                <div className="calories-label">TODAY'S CALORIES</div>
+                <div className={`calories-value${isOverLimit ? " over" : ""}`}>
+                  {totalCalories.toLocaleString()}
                 </div>
-              )}
+                {calorieTarget && (
+                  <div className="calories-sub">
+                    {isOverLimit
+                      ? `${Math.abs(remaining!)} kcal over target`
+                      : `at ${calorieTarget.toLocaleString()} kcal target`}
+                  </div>
+                )}
+              </div>
+              <svg viewBox="0 0 110 110" width="88" height="88" className="cal-ring">
+                <circle cx="55" cy="55" r={radius} fill="none" stroke="#dce8f5" strokeWidth="9" />
+                <circle
+                  cx="55" cy="55" r={radius} fill="none"
+                  stroke={isOverLimit ? "#e53e3e" : "#f47c20"} strokeWidth="9"
+                  strokeDasharray={`${strokeDash} ${circumference}`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 55 55)"
+                />
+                <text x="55" y="60" textAnchor="middle" fill={isOverLimit ? "#e53e3e" : "#003D7C"}
+                  fontSize="15" fontWeight="700" fontFamily="Inter,sans-serif">
+                  {Math.round(calorieProgress)}%
+                </text>
+              </svg>
             </div>
-            <svg viewBox="0 0 110 110" width="88" height="88" className="cal-ring">
-              <circle cx="55" cy="55" r={radius} fill="none" stroke="#dce8f5" strokeWidth="9" />
-              <circle
-                cx="55" cy="55" r={radius} fill="none"
-                stroke={isOverLimit ? "#e53e3e" : "#f47c20"} strokeWidth="9"
-                strokeDasharray={`${strokeDash} ${circumference}`}
-                strokeLinecap="round"
-                transform="rotate(-90 55 55)"
-              />
-              <text x="55" y="60" textAnchor="middle" fill={isOverLimit ? "#e53e3e" : "#003D7C"}
-                fontSize="15" fontWeight="700" fontFamily="Inter,sans-serif">
-                {Math.round(calorieProgress)}%
-              </text>
-            </svg>
+
+            {hasEstimatedEntry && <div className="estimated-nutrition-notice">Estimated</div>}
+            <div className="macros-row inline">
+              {[
+                { val: `${totalCarbs}g`, lbl: "Carbs" },
+                { val: `${totalProtein}g`, lbl: "Protein" },
+                { val: `${totalFat}g`, lbl: "Fats" },
+              ].map(({ val, lbl }) => (
+                <div className="macro-item" key={lbl}>
+                  <span className="macro-val">{val}</span>
+                  <span className="macro-lbl">{lbl}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="macros-row">
-            {[
-              { val: `${totalCarbs}g`, lbl: "Carbs" },
-              { val: `${totalProtein}g`, lbl: "Protein" },
-              { val: `${totalFat}g`, lbl: "Fats" },
-            ].map(({ val, lbl }) => (
-              <div className="macro-item" key={lbl}>
-                <span className="macro-val">{val}</span>
-                <span className="macro-lbl">{lbl}</span>
+          <div className="targets-panel">
+            <div className="targets-panel-title">🎯 Personalised Target</div>
+            {useTargetMode && targetBmi && targetDate ? (
+              targetTimelineUnsafe ? (
+                <div className="targets-panel-text warn">
+                  ⚠️ Reaching BMI {targetBmi} by {formatDateSlash(targetDate)} needs an unsafe rate of change, capped at a safe daily limit
+                  {earliestSafeDate && <>. Earliest safe date: <strong>{formatDateSlash(earliestSafeDate)}</strong></>}.
+                </div>
+              ) : (
+                <div className="targets-panel-text">
+                  Targeting BMI <strong>{targetBmi}</strong> by <strong>{formatDateSlash(targetDate)}</strong>.
+                  {weightDiffKg !== null && (
+                    <> You have to {weightDiffKg < 0 ? "lose" : "gain"} about <strong>{Math.abs(weightDiffKg).toFixed(1)} kg</strong>.</>
+                  )}
+                </div>
+              )
+            ) : bmiCategory && recommendedGoal && recommendedGoal !== goal ? (
+              <div className="targets-panel-text">
+                Your BMI ({bmi}) is in the <strong>{bmiCategory}</strong> range, consider switching your goal to <strong>{recommendedGoal}</strong>.
               </div>
-            ))}
+            ) : (
+              <div className="targets-panel-text muted">
+                No target set yet.{" "}
+                <button type="button" className="targets-panel-link" onClick={() => navigate("/profile")}>
+                  Set a target BMI
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -148,7 +189,7 @@ export default function Home() {
                   {food.name}
                   {food.count > 1 && <span className="meal-qty"> ×{food.count}</span>}
                 </div>
-                <div className="meal-canteen">{food.canteen} — {food.stall.split(" - ")[0]}</div>
+                <div className="meal-canteen">{food.canteen}, {food.stall.split(" - ")[0]}</div>
               </div>
               <div className="meal-cal">
                 {(food.calories * food.count).toLocaleString()}
@@ -158,7 +199,7 @@ export default function Home() {
           ))}
           {loggedEntries.length > 3 && (
             <button className="show-more-btn" onClick={() => navigate("/log")}>
-              +{loggedEntries.length - 3} more — view all
+              +{loggedEntries.length - 3} more, view all
             </button>
           )}
         </div>
@@ -170,7 +211,7 @@ export default function Home() {
         <div>
           <div className="streak-title">
             {streakDays === 0 ? "Start your streak!"
-              : streakDays === 1 ? "Day 1 — great start!"
+              : streakDays === 1 ? "Day 1, great start!"
               : `${streakDays}-Day Streak!`}
           </div>
           <div className="streak-sub">
@@ -204,7 +245,7 @@ export default function Home() {
                 </button>
                 <div className="meal-info">
                   <div className="meal-name">{food.name}</div>
-                  <div className="meal-canteen">{food.canteen} — {food.stall.split(" - ")[0]}</div>
+                  <div className="meal-canteen">{food.canteen}, {food.stall.split(" - ")[0]}</div>
                 </div>
                 <div className="meal-cal">
                   {food.calories.toLocaleString()}

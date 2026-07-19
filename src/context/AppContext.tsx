@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { foodItems as fallbackFoodItems, isValidEmail, isValidAge, isValidHeight, isValidWeight } from "../data";
+import {
+  foodItems as fallbackFoodItems, isValidEmail, isValidAge, isValidHeight, isValidWeight,
+  isValidTargetBmi, isValidTargetDate, KCAL_PER_KG_BODYWEIGHT, SAFE_MAX_DAILY_CALORIE_ADJUSTMENT,
+} from "../data";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -50,11 +53,14 @@ type AppContextType = {
   height: string; setHeight: (v: string) => void;
   weight: string; setWeight: (v: string) => void;
   goal: string; setGoal: (v: string) => void;
+  useTargetMode: boolean; setUseTargetMode: (v: boolean) => void;
+  targetBmi: string; setTargetBmi: (v: string) => void;
+  targetDate: string; setTargetDate: (v: string) => void;
   profileCreated: boolean;
   profileComplete: boolean;
   profilePrompt: boolean;
   setProfilePrompt: (v: boolean) => void;
-  saveProfile: () => Promise<void>;
+  saveProfile: (navigateAfter?: boolean) => Promise<void>;
   editProfile: () => void;
 
   // Food log
@@ -76,6 +82,10 @@ type AppContextType = {
   recommendedGoal: string | null;
   bmr: number;
   calorieTarget: number | null;
+  targetWeightKg: number | null;
+  weightDiffKg: number | null;
+  targetTimelineUnsafe: boolean;
+  earliestSafeDate: string | null;
   loggedEntries: (FoodItem & { count: number })[];
   totalCalories: number;
   totalProtein: number;
@@ -119,6 +129,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("Maintain weight");
+  const [useTargetMode, setUseTargetMode] = useState(false);
+  const [targetBmi, setTargetBmi] = useState("");
+  const [targetDate, setTargetDate] = useState("");
+  // Lazy initializer keeps Date.now() out of the render body (react-hooks/purity); day-granularity math doesn't need it fresher than mount time.
+  const [now] = useState(() => Date.now());
   const [profileCreated, setProfileCreated] = useState(false);
   const [profilePrompt, setProfilePrompt] = useState(false);
 
@@ -161,6 +176,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               setHeight(data.height || "");
               setWeight(data.weight || "");
               setGoal(data.goal || "Maintain weight");
+              setUseTargetMode(data.useTargetMode || false);
+              setTargetBmi(data.targetBmi || "");
+              setTargetDate(data.targetDate || "");
               setProfileCreated(true);
             }
 
@@ -200,6 +218,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setWeight("");
           setGender("Female");
           setGoal("Maintain weight");
+          setUseTargetMode(false);
+          setTargetBmi("");
+          setTargetDate("");
           setProfilePrompt(false);
         }
       } catch (error) {
@@ -330,11 +351,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       : 10 * w + 6.25 * h - 5 * a - 161;
   }, [weight, height, age, gender]);
 
+  const targetWeightKg = (useTargetMode && targetBmi && height)
+    ? Number(targetBmi) * heightM * heightM
+    : null;
+
+  const weightDiffKg = (targetWeightKg !== null && weight)
+    ? targetWeightKg - Number(weight)
+    : null;
+
+  const { targetTimelineUnsafe, clampedDailyAdjustment, earliestSafeDate } = useMemo(() => {
+    if (!useTargetMode || !targetDate || weightDiffKg === null) {
+      return { targetTimelineUnsafe: false, clampedDailyAdjustment: null as number | null, earliestSafeDate: null as string | null };
+    }
+    const daysUntilTarget = Math.ceil((new Date(targetDate).getTime() - now) / 86400000);
+    const rawDailyAdjustment = daysUntilTarget > 0
+      ? (weightDiffKg * KCAL_PER_KG_BODYWEIGHT) / daysUntilTarget
+      : null;
+    const isUnsafe = rawDailyAdjustment !== null
+      && Math.abs(rawDailyAdjustment) > SAFE_MAX_DAILY_CALORIE_ADJUSTMENT;
+    const clamped = rawDailyAdjustment === null ? null
+      : Math.max(-SAFE_MAX_DAILY_CALORIE_ADJUSTMENT, Math.min(SAFE_MAX_DAILY_CALORIE_ADJUSTMENT, rawDailyAdjustment));
+    // Suggests the earliest date the target BMI is reachable at a safe rate, when the chosen deadline is too aggressive.
+    const earliestDate = isUnsafe
+      ? new Date(now + Math.ceil(Math.abs(weightDiffKg * KCAL_PER_KG_BODYWEIGHT) / SAFE_MAX_DAILY_CALORIE_ADJUSTMENT) * 86400000)
+          .toISOString().slice(0, 10)
+      : null;
+    return { targetTimelineUnsafe: isUnsafe, clampedDailyAdjustment: clamped, earliestSafeDate: earliestDate };
+  }, [useTargetMode, targetDate, weightDiffKg, now]);
+
   const calorieTarget = bmr === 0 ? null
-    : Math.max(
-        gender === "Male" ? 1500 : 1200,
-        Math.round(bmr * 1.4 + (goal === "Gain muscle" ? 300 : goal === "Lose weight" ? -500 : 0))
-      );
+    : useTargetMode && clampedDailyAdjustment !== null
+      ? Math.max(gender === "Male" ? 1500 : 1200, Math.round(bmr * 1.4 + clampedDailyAdjustment))
+      : Math.max(
+          gender === "Male" ? 1500 : 1200,
+          Math.round(bmr * 1.4 + (goal === "Gain muscle" ? 300 : goal === "Lose weight" ? -500 : 0))
+        );
 
   const loggedEntries = foodItems
     .filter(f => (loggedCounts[f.id] || 0) > 0)
@@ -437,7 +488,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     navigate("/");
   };
 
-  const saveProfile = async () => {
+  const saveProfile = async (navigateAfter = true) => {
     if (!currentUser) return;
 
     if (!isValidAge(age)) {
@@ -452,6 +503,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setEmailError("Weight must be a number between 20 and 300 kg.");
       return;
     }
+    if (useTargetMode) {
+      if (!isValidTargetBmi(targetBmi)) {
+        setEmailError("Target BMI must be a number between 15 and 40.");
+        return;
+      }
+      if (!isValidTargetDate(targetDate)) {
+        setEmailError("Target date must be in the future, within the next 2 years.");
+        return;
+      }
+    }
     setEmailError("");
 
     try {
@@ -465,6 +526,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           height,
           weight,
           goal,
+          useTargetMode,
+          targetBmi: useTargetMode ? targetBmi : "",
+          targetDate: useTargetMode ? targetDate : "",
           profileCreated: true,
           email: currentUser.email,
           updatedAt: new Date().toISOString(),
@@ -473,7 +537,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       );
       setProfileCreated(true);
       setProfilePrompt(false);
-      navigate("/home");
+      if (navigateAfter) navigate("/home");
     } catch (error) {
       console.error("Failed to save profile:", error);
       setEmailError("Failed to save profile. Try again.");
@@ -513,11 +577,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       signInWithPassword, createAccountWithPassword, signInWithGoogle, signOut, authLoading,
       name, setName, gender, setGender, age, setAge,
       height, setHeight, weight, setWeight, goal, setGoal,
+      useTargetMode, setUseTargetMode, targetBmi, setTargetBmi, targetDate, setTargetDate,
       profileCreated, profileComplete, profilePrompt, setProfilePrompt, saveProfile, editProfile,
       loggedCounts, logHistory, addFood, removeFood,
       streakDays,
       foodItems, foodLoading,
-      bmi, bmiCategory, recommendedGoal, bmr, calorieTarget, loggedEntries,
+      bmi, bmiCategory, recommendedGoal, bmr, calorieTarget,
+      targetWeightKg, weightDiffKg, targetTimelineUnsafe, earliestSafeDate,
+      loggedEntries,
       totalCalories, totalProtein, totalCarbs, totalFat,
       isOverLimit, calorieProgress, remaining, initials,
     }}>
