@@ -1,0 +1,8 @@
+$kind: http-request
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/foodItems
+method: GET
+scripts:
+  - type: afterResponse
+    code: pm.test('Public read succeeds without auth (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 1000

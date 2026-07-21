@@ -1,0 +1,11 @@
+$kind: http-request
+description: Run manually at the end of a test session to remove test data. Do NOT include this in an automated Collection Runner pass if you want to re-run 2.2/3.2 afterwards.
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: DELETE
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: pm.test('Cleanup delete succeeded (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 1000

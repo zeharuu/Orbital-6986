@@ -99,7 +99,7 @@ function ProfileView() {
   const navigate = useNavigate();
   const {
     email, initials, name, gender, age, height, weight, goal,
-    bmi, bmr, calorieTarget,
+    bmi, bmiCategory, recommendedGoal, bmr, calorieTarget,
     totalCalories, calorieProgress, isOverLimit, remaining,
     editProfile, signOut,
   } = useApp();
@@ -141,6 +141,12 @@ function ProfileView() {
           </div>
         ))}
       </div>
+
+      {bmiCategory && recommendedGoal && recommendedGoal !== goal && (
+        <div className="profile-prompt-notice">
+          Your BMI ({bmi}) falls in the <strong>{bmiCategory}</strong> range — you might consider switching your goal to <strong>{recommendedGoal}</strong>.
+        </div>
+      )}
 
       {calorieTarget !== null && (
         <div className="calorie-tracker">

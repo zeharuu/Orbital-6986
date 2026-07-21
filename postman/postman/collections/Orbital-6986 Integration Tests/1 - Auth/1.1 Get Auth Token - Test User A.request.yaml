@@ -1,0 +1,58 @@
+$kind: http-request
+description: "Self-healing: tries sign-up first; if the account already exists it automatically falls back to sign-in. Safe to click every single run - no need to remember which request to use."
+url: https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  key: "{{apiKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{testEmail}}",
+      "password": "{{testPassword}}",
+      "returnSecureToken": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+
+      function saveToken(t) {
+        pm.environment.set('idToken', t.idToken);
+        pm.environment.set('uid', t.localId);
+      }
+
+      if (json.idToken) {
+        saveToken(json);
+        pm.test('Test User A: signed up and token captured', () => true);
+      } else {
+        pm.test('Test User A: signup failed as expected (already exists)', function () {
+          pm.expect(json.error && json.error.message).to.eql('EMAIL_EXISTS');
+        });
+
+        var signInRequest = {
+          url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + pm.environment.get('apiKey'),
+          method: 'POST',
+          header: { 'Content-Type': 'application/json' },
+          body: {
+            mode: 'raw',
+            raw: JSON.stringify({
+              email: pm.environment.get('testEmail'),
+              password: pm.environment.get('testPassword'),
+              returnSecureToken: true
+            })
+          }
+        };
+
+        pm.sendRequest(signInRequest, function (err, res) {
+          pm.test('Test User A: fallback sign-in succeeded', function () {
+            pm.expect(err).to.equal(null);
+            pm.expect(res.code).to.equal(200);
+          });
+          if (!err && res.code === 200) saveToken(res.json());
+        });
+      }
+    language: text/javascript
+order: 1000

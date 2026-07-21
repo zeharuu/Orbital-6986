@@ -1,0 +1,987 @@
+{
+  "info": {
+    "_postman_id": "orbital-6986-integration-tests",
+    "name": "Orbital-6986 Integration Tests",
+    "description": "API-level integration tests for Nutrinus: Firebase Auth -> Firestore -> Firestore Security Rules. Run against the 'Orbital Local' environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Auth",
+      "item": [
+        {
+          "name": "1.1 Get Auth Token - Test User A",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signUp"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Self-healing: tries sign-up first; if the account already exists it automatically falls back to sign-in. Safe to click every single run - no need to remember which request to use."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "",
+                "function saveToken(t) {",
+                "  pm.environment.set('idToken', t.idToken);",
+                "  pm.environment.set('uid', t.localId);",
+                "}",
+                "",
+                "if (json.idToken) {",
+                "  saveToken(json);",
+                "  pm.test('Test User A: signed up and token captured', () => true);",
+                "} else {",
+                "  pm.test('Test User A: signup failed as expected (already exists)', function () {",
+                "    pm.expect(json.error && json.error.message).to.eql('EMAIL_EXISTS');",
+                "  });",
+                "",
+                "  var signInRequest = {",
+                "    url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + pm.environment.get('apiKey'),",
+                "    method: 'POST',",
+                "    header: { 'Content-Type': 'application/json' },",
+                "    body: {",
+                "      mode: 'raw',",
+                "      raw: JSON.stringify({",
+                "        email: pm.environment.get('testEmail'),",
+                "        password: pm.environment.get('testPassword'),",
+                "        returnSecureToken: true",
+                "      })",
+                "    }",
+                "  };",
+                "",
+                "  pm.sendRequest(signInRequest, function (err, res) {",
+                "    pm.test('Test User A: fallback sign-in succeeded', function () {",
+                "      pm.expect(err).to.equal(null);",
+                "      pm.expect(res.code).to.equal(200);",
+                "    });",
+                "    if (!err && res.code === 200) saveToken(res.json());",
+                "  });",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "1.2 Get Auth Token - Test User B",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail2}}\",\n  \"password\": \"{{testPassword2}}\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signUp"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Second identity, used only to prove User A's data is NOT readable/writable by User B. Same self-healing sign-up/sign-in fallback as 1.1."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "",
+                "function saveToken(t) {",
+                "  pm.environment.set('idToken2', t.idToken);",
+                "  pm.environment.set('uid2', t.localId);",
+                "}",
+                "",
+                "if (json.idToken) {",
+                "  saveToken(json);",
+                "  pm.test('Test User B: signed up and token captured', () => true);",
+                "} else {",
+                "  pm.test('Test User B: signup failed as expected (already exists)', function () {",
+                "    pm.expect(json.error && json.error.message).to.eql('EMAIL_EXISTS');",
+                "  });",
+                "",
+                "  var signInRequest = {",
+                "    url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + pm.environment.get('apiKey'),",
+                "    method: 'POST',",
+                "    header: { 'Content-Type': 'application/json' },",
+                "    body: {",
+                "      mode: 'raw',",
+                "      raw: JSON.stringify({",
+                "        email: pm.environment.get('testEmail2'),",
+                "        password: pm.environment.get('testPassword2'),",
+                "        returnSecureToken: true",
+                "      })",
+                "    }",
+                "  };",
+                "",
+                "  pm.sendRequest(signInRequest, function (err, res) {",
+                "    pm.test('Test User B: fallback sign-in succeeded', function () {",
+                "      pm.expect(err).to.equal(null);",
+                "      pm.expect(res.code).to.equal(200);",
+                "    });",
+                "    if (!err && res.code === 200) saveToken(res.json());",
+                "  });",
+                "}"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "2 - Profile Integration (auth -> Firestore -> dashboard)",
+      "item": [
+        {
+          "name": "2.1 Write Own Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"profileCreated\": { \"booleanValue\": true },\n    \"name\": { \"stringValue\": \"Postman Tester\" },\n    \"height\": { \"stringValue\": \"170\" },\n    \"weight\": { \"stringValue\": \"60\" }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=profileCreated&updateMask.fieldPaths=name&updateMask.fieldPaths=height&updateMask.fieldPaths=weight",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [
+                { "key": "updateMask.fieldPaths", "value": "profileCreated" },
+                { "key": "updateMask.fieldPaths", "value": "name" },
+                { "key": "updateMask.fieldPaths", "value": "height" },
+                { "key": "updateMask.fieldPaths", "value": "weight" }
+              ]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Profile write succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "2.2 Read Back Own Profile (assert write persisted)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Read succeeded (200)', () => pm.response.code === 200);",
+                "var json = pm.response.json();",
+                "pm.test('name field matches what was written', () => json.fields.name.stringValue === 'Postman Tester');",
+                "pm.test('profileCreated is true', () => json.fields.profileCreated.booleanValue === true);"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "3 - Meal Log Integration (log food -> dashboard update)",
+      "item": [
+        {
+          "name": "3.1 Add Meal - First Time (addFood: 0 -> 1)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logs\": {\n      \"mapValue\": {\n        \"fields\": {\n          \"postmanTestDate\": {\n            \"mapValue\": {\n              \"fields\": {\n                \"1\": { \"integerValue\": \"1\" }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "logs.postmanTestDate" }]
+            },
+            "description": "Mirrors AppContext.tsx addFood(): setLoggedCounts(prev => ({...prev, [id]: (prev[id] || 0) + 1})), then persistLog's updateDoc(ref, { [`logs.${today}`]: loggedCounts }). Food id '1' = 'Chicken Rice' in data.ts. updateMask targets logs.postmanTestDate specifically (not the whole logs field) to match the app's real dot-path update, which only touches today's entry."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Add meal write succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.2 Read Back After First Add (assert count == 1)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;",
+                "pm.test('logged count is 1 after first add', () => count === '1');"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.3 Add Same Meal Again (addFood: 1 -> 2)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logs\": {\n      \"mapValue\": {\n        \"fields\": {\n          \"postmanTestDate\": {\n            \"mapValue\": {\n              \"fields\": {\n                \"1\": { \"integerValue\": \"2\" }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "logs.postmanTestDate" }]
+            },
+            "description": "Mirrors clicking '+ Add to Log' a second time on the same item: count goes from 1 to 2, same as addFood's (prev[id] || 0) + 1 branch."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Second add write succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.4 Read Back After Second Add (assert count == 2)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;",
+                "pm.test('logged count is 2 after second add', () => count === '2');"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.5 Remove One Instance (removeFood: 2 -> 1)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logs\": {\n      \"mapValue\": {\n        \"fields\": {\n          \"postmanTestDate\": {\n            \"mapValue\": {\n              \"fields\": {\n                \"1\": { \"integerValue\": \"1\" }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "logs.postmanTestDate" }]
+            },
+            "description": "Mirrors AppContext.tsx removeFood()'s 'else' branch: (next[id] || 0) <= 1 is false since count is 2, so it decrements to 1 instead of deleting the key."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Remove-one write succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.6 Read Back After Removing One (assert count == 1)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;",
+                "pm.test('logged count is 1 after removing one', () => count === '1');"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.7 Remove Last Instance (removeFood: 1 -> deleted)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logs\": {\n      \"mapValue\": {\n        \"fields\": {\n          \"postmanTestDate\": {\n            \"mapValue\": {\n              \"fields\": {}\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "logs.postmanTestDate" }]
+            },
+            "description": "Mirrors removeFood()'s 'if' branch: (next[id] || 0) <= 1 is true since count is 1, so 'delete next[id]' removes the key entirely rather than decrementing to 0. The body sends an empty map for postmanTestDate to represent that deletion."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Remove-last write succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "3.8 Read Back After Full Removal (assert key deleted, not just 0)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "var dateMap = json.fields.logs && json.fields.logs.mapValue.fields.postmanTestDate;",
+                "var foodKeys = dateMap ? Object.keys(dateMap.mapValue.fields || {}) : [];",
+                "pm.test('food id 1 key is fully deleted, not present with value 0', () => !foodKeys.includes('1'));"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "4 - Security Rules (negative tests)",
+      "item": [
+        {
+          "name": "4.1 [Negative] Read Profile Without Auth Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            },
+            "description": "No Authorization header at all. Rules require request.auth != null, so this must be denied."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Unauthenticated read is denied (403)', () => pm.response.code === 403);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "4.2 [Negative] Read User A's Profile Using User B's Token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken2}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            },
+            "description": "Authenticated, but as a different user. Rules require request.auth.uid == userId, so User B must not be able to read User A's document."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Cross-user read is denied (403)', () => pm.response.code === 403);"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "5 - Public Data (foodItems)",
+      "item": [
+        {
+          "name": "5.1 Public Read foodItems (no auth required)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/foodItems",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "foodItems"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Public read succeeds without auth (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "5.2 [Negative] Write to foodItems (must be denied for everyone)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"name\": { \"stringValue\": \"Hacked Item\" }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/foodItems/postmanTestDoc?updateMask.fieldPaths=name",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "foodItems", "postmanTestDoc"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "name" }]
+            },
+            "description": "Rules say 'allow write: if false' for foodItems - even an authenticated user must be denied."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Write to foodItems is denied (403) even when authenticated', () => pm.response.code === 403);"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "6 - Auth Edge Cases",
+      "item": [
+        {
+          "name": "6.1 [Negative] Wrong-Case Password Is Rejected",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{_wrongCasePassword}}\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signInWithPassword"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Firebase Auth passwords are case-sensitive (hashed comparison). Flips the case of every letter in testPassword and confirms sign-in is rejected. Run after '1 - Auth' so Test User A already exists."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var pw = pm.environment.get('testPassword');",
+                  "var flipped = pw.split('').map(function (c) {",
+                  "  return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();",
+                  "}).join('');",
+                  "pm.environment.set('_wrongCasePassword', flipped);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Wrong-case password is rejected (400)', function () {",
+                  "  pm.expect(pm.response.code).to.equal(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Error indicates invalid credentials', function () {",
+                  "  pm.expect(['INVALID_LOGIN_CREDENTIALS', 'INVALID_PASSWORD', 'EMAIL_NOT_FOUND']).to.include(json.error && json.error.message);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.2 Email Is Case-Insensitive on Sign-In",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{_mixedCaseEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signInWithPassword"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Flips the case of every letter in testEmail (matching the app's own lowercasing behavior in AppContext.tsx's getTrimmedEmail) and confirms sign-in still succeeds and resolves to the same uid."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var email = pm.environment.get('testEmail');",
+                  "var mixed = email.split('').map(function (c) {",
+                  "  return /[a-z]/.test(c) ? c.toUpperCase() : c;",
+                  "}).join('');",
+                  "pm.environment.set('_mixedCaseEmail', mixed);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mixed-case email still signs in successfully (200)', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Resolves to the same uid regardless of email case', function () {",
+                  "  pm.expect(json.localId).to.equal(pm.environment.get('uid'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.3 [Negative] Sign-Up Detects Already-Registered Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"SomeOtherPass999!\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signUp"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Identity Platform keys accounts by email regardless of which sign-in method created them (password vs Google), so this proves the same collision detection your app relies on in AppContext.tsx's 'auth/email-already-in-use' / 'auth/account-exists-with-different-credential' handling - a second signUp for an existing email is always rejected with EMAIL_EXISTS, whether the original account was password-based or Google-based."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Duplicate sign-up is rejected (400)', function () {",
+                "  pm.expect(pm.response.code).to.equal(400);",
+                "});",
+                "var json = pm.response.json();",
+                "pm.test('Error is EMAIL_EXISTS', function () {",
+                "  pm.expect(json.error && json.error.message).to.equal('EMAIL_EXISTS');",
+                "});"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "7 - Data Integrity & Boundary Edge Cases",
+      "description": "Probes boundary/malformed inputs against the real Firestore/Auth API (still integration tests, just negative-path). 7.1-7.4 originally documented gaps in firestore.rules content validation; those rules were since added (isValidProfileWrite in firestore.rules), so 7.1-7.4 now prove the writes are correctly rejected. 7.5-7.9 remain documented, accepted gaps (log-count bounds, doc-existence, password strength). Run after '1 - Auth'. Run '8 - Cleanup' afterward.",
+      "item": [
+        {
+          "name": "7.1 [Fixed] Garbage Profile Data Now Rejected (height=-500, weight=banana)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"height\": { \"stringValue\": \"-500\" },\n    \"weight\": { \"stringValue\": \"banana\" }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=height&updateMask.fieldPaths=weight",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [
+                { "key": "updateMask.fieldPaths", "value": "height" },
+                { "key": "updateMask.fieldPaths", "value": "weight" }
+              ]
+            },
+            "description": "firestore.rules now runs isValidProfileWrite(), which requires height/weight to be numeric strings within sane bounds (mirrors data.ts's isValidHeight/isValidWeight). This was previously a documented gap (accepted with 200) - now closed at the database layer, independent of the client."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Firestore now rejects garbage profile data (403)', () => pm.response.code === 403);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.2 Read Back Confirms Rejected Write Had No Effect",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            },
+            "description": "Confirms the rejected write in 7.1 was atomic - the valid height/weight from 2.1 ('170'/'60') remain untouched, not partially overwritten."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('height still holds the last valid value (170), not the rejected write', () => json.fields.height.stringValue === '170');",
+                "pm.test('weight still holds the last valid value (60), not the rejected write', () => json.fields.weight.stringValue === '60');"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.3 [Fixed] Type-Mismatched profileCreated Now Rejected",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"profileCreated\": { \"stringValue\": \"false\" }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=profileCreated",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "profileCreated" }]
+            },
+            "description": "firestore.rules now requires data.profileCreated is bool. Writing it as the string 'false' - which would have silently type-confused the app's `if (data.profileCreated)` truthiness check - is now rejected at the database layer."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Firestore now rejects type-mismatched profileCreated (403)', () => pm.response.code === 403);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.4 Read Back Confirms profileCreated Still a Valid Boolean",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('profileCreated is still the real boolean true from 2.1, rejected write had no effect', () => {",
+                "  pm.expect(json.fields.profileCreated.booleanValue).to.equal(true);",
+                "  pm.expect(json.fields.profileCreated.stringValue).to.equal(undefined);",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.5 [Gap] Write Negative Log Count",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logs\": {\n      \"mapValue\": {\n        \"fields\": {\n          \"postmanTestDate\": {\n            \"mapValue\": {\n              \"fields\": {\n                \"1\": { \"integerValue\": \"-5\" }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"],
+              "query": [{ "key": "updateMask.fieldPaths", "value": "logs.postmanTestDate" }]
+            },
+            "description": "addFood/removeFood only ever produce positive integers, but nothing on the server stops a direct write of a negative count. Correctness on the dashboard relies entirely on the client-side filter `(loggedCounts[f.id] || 0) > 0` in AppContext.tsx:324 - there is no server-side guarantee."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Firestore accepts a negative log count with no rejection (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.6 Read Back Negative Log Count (confirms it was stored, not rejected)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;",
+                "pm.test('negative count stored exactly as-is (-5), proving no server-side validation exists', () => count === '-5');"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.7 Sign Up Fresh Ephemeral User (never had a profile)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-ephemeral-{{$timestamp}}@example.com\",\n  \"password\": \"TestPass123!\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signUp"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "Uses Postman's built-in {{$timestamp}} dynamic variable so the email is guaranteed unique on every single run - this account has genuinely never existed before, so it's guaranteed to have no Firestore document yet (saveProfile() has never been called for it)."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Ephemeral user created (200)', () => pm.response.code === 200);",
+                "var json = pm.response.json();",
+                "pm.environment.set('ephemeralIdToken', json.idToken);",
+                "pm.environment.set('ephemeralUid', json.localId);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.8 [Gap-Check] Read New User's Doc Before Any Profile Save (expect 404)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ephemeralIdToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{ephemeralUid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{ephemeralUid}}"]
+            },
+            "description": "A user can exist in Firebase Auth without ever having a Firestore document (saveProfile() creates the doc, not sign-up). AppContext.tsx's onAuthStateChanged handler guards this with `if (userDoc.exists())` - this proves that guard is load-bearing, not dead code, by confirming the raw API really does 404 here."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Brand-new user doc does not exist yet (404)', () => pm.response.code === 404);"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "7.9 [Defense-in-Depth] Weak Password Rejected Server-Side",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-weakpw-{{$timestamp}}@example.com\",\n  \"password\": \"123\",\n  \"returnSecureToken\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+              "protocol": "https",
+              "host": ["identitytoolkit", "googleapis", "com"],
+              "path": ["v1", "accounts:signUp"],
+              "query": [{ "key": "key", "value": "{{apiKey}}" }]
+            },
+            "description": "createAccountWithPassword in AppContext.tsx checks password.length < 6 CLIENT-SIDE before calling Firebase. This bypasses the app entirely and calls Firebase directly with a 3-character password, to confirm Firebase's own server-side validation is a real safety net, not just a UI nicety - unlike gaps 7.1-7.6, this one is expected to PASS in your favor."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Weak password is rejected server-side, independent of the app (400)', () => pm.response.code === 400);",
+                "var json = pm.response.json();",
+                "pm.test('Error indicates weak password', () => {",
+                "  pm.expect((json.error && json.error.message) || '').to.include('WEAK_PASSWORD');",
+                "});"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "8 - Cleanup",
+      "item": [
+        {
+          "name": "8.1 Delete Test User A's Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{idToken}}" }],
+            "url": {
+              "raw": "https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}",
+              "protocol": "https",
+              "host": ["firestore", "googleapis", "com"],
+              "path": ["v1", "projects", "{{projectId}}", "databases", "(default)", "documents", "users", "{{uid}}"]
+            },
+            "description": "Run manually at the end of a test session to remove test data. Do NOT include this in an automated Collection Runner pass if you want to re-run 2.2/3.2 afterwards."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Cleanup delete succeeded (200)', () => pm.response.code === 200);"
+              ]
+            }
+          }]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+$kind: http-request
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+      var count = json.fields.logs.mapValue.fields.postmanTestDate.mapValue.fields['1'].integerValue;
+      pm.test('logged count is 1 after removing one', () => count === '1');
+    language: text/javascript
+order: 6000

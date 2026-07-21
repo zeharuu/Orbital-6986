@@ -25,3 +25,18 @@ export function userKey(email: string) {
 export function isValidEmail(e: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 }
+
+export function isValidAge(a: string) {
+  const n = Number(a);
+  return Number.isFinite(n) && n >= 10 && n <= 120;
+}
+
+export function isValidHeight(h: string) {
+  const n = Number(h);
+  return Number.isFinite(n) && n >= 50 && n <= 250;
+}
+
+export function isValidWeight(w: string) {
+  const n = Number(w);
+  return Number.isFinite(n) && n >= 20 && n <= 300;
+}

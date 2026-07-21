@@ -1,0 +1,22 @@
+$kind: http-request
+description: "Rules say 'allow write: if false' for foodItems - even an authenticated user must be denied."
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/foodItems/postmanTestDoc?updateMask.fieldPaths=name
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  updateMask.fieldPaths: name
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "name": { "stringValue": "Hacked Item" }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Write to foodItems is denied (403) even when authenticated', () => pm.response.code === 403);
+    language: text/javascript
+order: 2000

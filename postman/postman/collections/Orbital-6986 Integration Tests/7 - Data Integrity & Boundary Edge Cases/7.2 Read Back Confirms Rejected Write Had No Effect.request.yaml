@@ -1,0 +1,14 @@
+$kind: http-request
+description: Confirms the rejected write in 7.1 was atomic - the valid height/weight from 2.1 ('170'/'60') remain untouched, not partially overwritten.
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+      pm.test('height still holds the last valid value (170), not the rejected write', () => json.fields.height.stringValue === '170');
+      pm.test('weight still holds the last valid value (60), not the rejected write', () => json.fields.weight.stringValue === '60');
+    language: text/javascript
+order: 2000

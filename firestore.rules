@@ -1,15 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Food items are public read-only data, seeded by an admin script.
+
+    function isValidNumericString(value, min, max) {
+      return value is string
+        && value.matches('^-?[0-9]+(\\.[0-9]+)?$')
+        && float(value) >= min
+        && float(value) <= max;
+    }
+
+   
+    function isValidProfileWrite(data) {
+      return (!('height' in data) || isValidNumericString(data.height, 50, 250))
+        && (!('weight' in data) || isValidNumericString(data.weight, 20, 300))
+        && (!('age' in data) || isValidNumericString(data.age, 10, 120))
+        && (!('profileCreated' in data) || data.profileCreated is bool);
+    }
+
+   
     match /foodItems/{itemId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Users can only read/write their own profile/log/streak document.
+   
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && isValidProfileWrite(request.resource.data);
     }
   }
 }

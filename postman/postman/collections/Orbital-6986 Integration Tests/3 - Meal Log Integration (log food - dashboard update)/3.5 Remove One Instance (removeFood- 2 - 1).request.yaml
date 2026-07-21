@@ -1,0 +1,35 @@
+$kind: http-request
+name: "3.5 Remove One Instance (removeFood: 2 -> 1)"
+description: "Mirrors AppContext.tsx removeFood()'s 'else' branch: (next[id] || 0) <= 1 is false since count is 2, so it decrements to 1 instead of deleting the key."
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  updateMask.fieldPaths: logs.postmanTestDate
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "logs": {
+          "mapValue": {
+            "fields": {
+              "postmanTestDate": {
+                "mapValue": {
+                  "fields": {
+                    "1": { "integerValue": "1" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Remove-one write succeeded (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 5000

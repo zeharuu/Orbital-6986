@@ -1,0 +1,35 @@
+$kind: http-request
+name: "3.1 Add Meal - First Time (addFood: 0 -> 1)"
+description: "Mirrors AppContext.tsx addFood(): setLoggedCounts(prev => ({...prev, [id]: (prev[id] || 0) + 1})), then persistLog's updateDoc(ref, { [`logs.${today}`]: loggedCounts }). Food id '1' = 'Chicken Rice' in data.ts. updateMask targets logs.postmanTestDate specifically (not the whole logs field) to match the app's real dot-path update, which only touches today's entry."
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}?updateMask.fieldPaths=logs.postmanTestDate
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{idToken}}
+queryParams:
+  updateMask.fieldPaths: logs.postmanTestDate
+body:
+  type: json
+  content: |-
+    {
+      "fields": {
+        "logs": {
+          "mapValue": {
+            "fields": {
+              "postmanTestDate": {
+                "mapValue": {
+                  "fields": {
+                    "1": { "integerValue": "1" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Add meal write succeeded (200)', () => pm.response.code === 200);
+    language: text/javascript
+order: 1000

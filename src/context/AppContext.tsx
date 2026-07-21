@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { foodItems as fallbackFoodItems, isValidEmail } from "../data";
+import { foodItems as fallbackFoodItems, isValidEmail, isValidAge, isValidHeight, isValidWeight } from "../data";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -72,6 +72,8 @@ type AppContextType = {
 
   // Computed
   bmi: string | null;
+  bmiCategory: string | null;
+  recommendedGoal: string | null;
   bmr: number;
   calorieTarget: number | null;
   loggedEntries: (FoodItem & { count: number })[];
@@ -309,6 +311,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const heightM = Number(height) / 100;
   const bmi = height && weight ? (Number(weight) / (heightM * heightM)).toFixed(1) : null;
 
+  const bmiCategory = bmi === null ? null
+    : Number(bmi) < 18.5 ? "Underweight"
+    : Number(bmi) < 25 ? "Normal weight"
+    : Number(bmi) < 30 ? "Overweight"
+    : "Overweight";
+
+  const recommendedGoal = bmiCategory === "Underweight" ? "Gain muscle"
+    : bmiCategory === "Overweight" ? "Lose weight"
+    : bmiCategory === "Normal weight" ? "Maintain weight"
+    : null;
+
   const bmr = useMemo(() => {
     const w = Number(weight), h = Number(height), a = Number(age);
     if (!w || !h || !a) return 0;
@@ -318,7 +331,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [weight, height, age, gender]);
 
   const calorieTarget = bmr === 0 ? null
-    : Math.round(bmr * 1.4 + (goal === "Gain muscle" ? 300 : goal === "Lose weight" ? -300 : 0));
+    : Math.max(
+        gender === "Male" ? 1500 : 1200,
+        Math.round(bmr * 1.4 + (goal === "Gain muscle" ? 300 : goal === "Lose weight" ? -500 : 0))
+      );
 
   const loggedEntries = foodItems
     .filter(f => (loggedCounts[f.id] || 0) > 0)
@@ -424,6 +440,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveProfile = async () => {
     if (!currentUser) return;
 
+    if (!isValidAge(age)) {
+      setEmailError("Age must be a number between 10 and 120.");
+      return;
+    }
+    if (!isValidHeight(height)) {
+      setEmailError("Height must be a number between 50 and 250 cm.");
+      return;
+    }
+    if (!isValidWeight(weight)) {
+      setEmailError("Weight must be a number between 20 and 300 kg.");
+      return;
+    }
+    setEmailError("");
+
     try {
       const userDocRef = doc(db, "users", currentUser.uid);
       await setDoc(
@@ -487,7 +517,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       loggedCounts, logHistory, addFood, removeFood,
       streakDays,
       foodItems, foodLoading,
-      bmi, bmr, calorieTarget, loggedEntries,
+      bmi, bmiCategory, recommendedGoal, bmr, calorieTarget, loggedEntries,
       totalCalories, totalProtein, totalCarbs, totalFat,
       isOverLimit, calorieProgress, remaining, initials,
     }}>
