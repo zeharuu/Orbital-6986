@@ -1,0 +1,16 @@
+$kind: http-request
+description: "Proves persistence across sessions, not just read-after-write in the same run: uses the fresh token from 2.3, not the original token from folder 1, to confirm the profile saved in 2.1 is still there for a genuinely new sign-in."
+url: https://firestore.googleapis.com/v1/projects/{{projectId}}/databases/(default)/documents/users/{{uid}}
+method: GET
+headers:
+  Authorization: Bearer {{idToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      var json = pm.response.json();
+      pm.test('name still matches after a fresh sign-in', () => json.fields.name.stringValue === 'Postman Tester');
+      pm.test('height still matches after a fresh sign-in', () => json.fields.height.stringValue === '170');
+      pm.test('weight still matches after a fresh sign-in', () => json.fields.weight.stringValue === '60');
+      pm.test('profileCreated still true after a fresh sign-in', () => json.fields.profileCreated.booleanValue === true);
+    language: text/javascript
+order: 4000

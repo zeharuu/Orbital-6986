@@ -1,3 +1,4 @@
 $kind: collection
+name: 6 - Data Integrity & Boundary Edge Cases
 description: Probes boundary/malformed inputs against the real Firestore/Auth API (still integration tests, just negative-path). 7.1-7.4 originally documented gaps in firestore.rules content validation; those rules were since added (isValidProfileWrite in firestore.rules), so 7.1-7.4 now prove the writes are correctly rejected. 7.5-7.9 remain documented, accepted gaps (log-count bounds, doc-existence, password strength). Run after '1 - Auth'. Run '8 - Cleanup' afterward.
 order: 7000
